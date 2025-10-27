@@ -1,0 +1,24 @@
+name: app
+version: 0.1.0.0
+author: Your Name
+build-type: Simple
+cabal-version: >=1.24
+
+executable hello
+  hs-source-dirs: src
+  main-is: Main.hs
+  default-language: Haskell2010
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -funbox-strict-fields
+  -- other-modules: AnotherModule
+  build-tools: alex, happy
+  build-depends: base
+               , containers
+               , unordered-containers
+               , filepath
+               , text
+               , pretty-show
+               , prettyprinter
+               , optparse-applicative
+               , uniplate
+               , protolude
+               , recursion-schemes
