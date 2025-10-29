@@ -69,8 +69,12 @@ let tr = Node("a",Node("b",Leaf(1),Leaf(2)),Leaf(3))
             | _ -> exit 1
         
       in
-      try work (input_line stdin) with
-       |End_of_file -> exit 1
+      let out = 
+         try work (input_line stdin) with
+         |End_of_file -> exit 1
+      in
+      try (let _ = input_line stdin in exit 1) with
+         |End_of_file -> out
 let main =
    let len = Array.length Sys.argv in 
    if len <> 2 then 
