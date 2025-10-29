@@ -1,7 +1,7 @@
 .PHONY: all clean
 all:
-	ocamlbuild primes.native
-	mv primes.native primes
+	ocamlbuild primes.native         
+	cp _build/primes.native primes
 
 clean:
 	$(RM) -rf _build
