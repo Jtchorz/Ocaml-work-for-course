@@ -71,7 +71,7 @@ let parseExpr t =
             | Semi -> (nextToken (), ShowE)
             | _ -> printf "error missing semicolon\n"; exit 1
             )
-      | Endline -> (Endline, Endprogram)
+      | Endline | Eof -> (Endline, Endprogram)
       | _ -> printf "error, expected a command token \n"; exit 1
 
 let rec parseExprs t =
