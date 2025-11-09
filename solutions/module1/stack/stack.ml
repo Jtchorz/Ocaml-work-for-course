@@ -9,6 +9,7 @@ type expr =
    | MulE
    | DivE
    | ShowE 
+   | Endprogram
 
 type exprs =
    | Many of expr * exprs
@@ -36,6 +37,7 @@ let prettyexpr t =
       | MulE -> printf ("Mul\n") 
       | DivE -> printf ("Div\n")
       | ShowE -> printf ("Show\n")
+      | Endprogram -> printf "you've reached the end of the program \n"
 let parseExpr t = 
    match t with 
       | Push -> (let nt = nextToken () in match nt with
@@ -69,6 +71,7 @@ let parseExpr t =
             | Semi -> (nextToken (), ShowE)
             | _ -> printf "error missing semicolon\n"; exit 1
             )
+      | Endline -> (Endline, Endprogram)
       | _ -> printf "error, expected a command token \n"; exit 1
 
 let rec parseExprs t =
@@ -109,6 +112,7 @@ let execute e stack=
       | [] -> printf "stack is empty \n"; stack
       | a::nstack -> printf "%d\n" a; a::nstack
       )
+   | Endprogram -> exit 0
 
 
 let rec executeall e stack =
