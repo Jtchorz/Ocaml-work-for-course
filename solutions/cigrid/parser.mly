@@ -14,7 +14,7 @@
 %token <string> Ident
 %token Eof
 %token <int> IntConst
-%token <string> CharConst
+%token <char> CharConst
 %token <string> StringConst
 
 %token Exclamation "!"
@@ -34,6 +34,10 @@
 %token SemiColon ";"
 %token RCurly "}"
 %token LCurly "{"
+%token Comma ","
+%token RSquare "]"
+%token LSquare "["
+%token Dot "."
 
 %token ShiftLeft "<<"
 %token ShiftRight ">>"
@@ -54,8 +58,17 @@
 %left "<<" ">>"
 %left "+" "-"
 %left "*" "/" "%"
-%right "!" "~" UMINUS
+%nonassoc "!" "~" UMINUS
+
+
+%start main 
+%type <int> main
 
 %%
+unop 
 
-| "-" e = expr %prec UMINUS
+main:
+    | Eof
+        { 1 }
+(*
+| "-" e = expr %prec UMINUS*)

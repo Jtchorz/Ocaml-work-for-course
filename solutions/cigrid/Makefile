@@ -1,6 +1,6 @@
 .PHONY: all clean
 all:
-	ocamlbuild cigrid.native
+	ocamlbuild -use-menhir cigrid.native
 	mv cigrid.native cigrid
 
 clean:

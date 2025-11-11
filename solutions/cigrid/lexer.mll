@@ -5,11 +5,12 @@
     let commentBegin = ref 0
 }
 
-let line_comment = "//" [^ '\n']*
+let line_comment = ("//" | '#') [^ '\n']*
+ 
 let mline_comment = "/*" "*/"
 
-let ident = [_a-zA-Z][_a-zA-Z0-9]*
-let number = (0|[1-9][0-9]*) | (0[xX][0-9a-fA-F]+)
+let ident = ['_' 'a'-'z' 'A'-'Z']['_' 'a'-'z' 'A'-'Z' '0'-'9']*
+let number = ('0'|['1'-'9']['0'-'9']*) | ('0'['x' 'X']['0'-'9' 'a'-'f' 'A'-'F']+)
 
 let character = [^ '\\' '"'] | ('\\'['n''t''\\''\'''\"'])
 let s_character = [^ '\\' '\"'] | ('\\'['n''t''\\''\'''\"'])
@@ -18,7 +19,7 @@ rule token = parse
     | line_comment
         { token lexbuf }
     | "/*"
-        { commentBegin := Lexing.pos_lnum; comment lexbuf; token lexbuf  }
+        { commentBegin := lexbuf.lex_curr_p.pos_lnum; comment lexbuf; token lexbuf  }
     | [' ' '\t' '\r']
         { token lexbuf }
     | '\n'
@@ -102,9 +103,23 @@ rule token = parse
         { LCurly }
     | ['}']
         { RCurly }
+    | [' ' '\t' '\r']
+        { token lexbuf }
+    | '\n'
+        { Lexing.new_line lexbuf; token lexbuf }
+    | ident as str 
+    | [',']
+        { Comma }
+    | ['[']
+        { RSquare }
+    | [']']
+        { LSquare }
+    | ['.']
+        { Dot }
     | eof
         { Eof }
-
+    | _ as c
+        { raise (Error(c))}
 and comment = parse
     | "*/"
         { () }
