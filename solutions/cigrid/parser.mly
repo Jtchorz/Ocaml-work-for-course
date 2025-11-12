@@ -63,7 +63,7 @@ open Ast
 %left "==" "!="
 %left "<" ">" "<=" ">="
 %left "<<" ">>"
-%left "+" "-" "++" "--"
+%left "+" "-"
 %left "*" "/" "%"
 %right "!" "~" UMINUS
 
@@ -82,11 +82,11 @@ program:
         { Prog(l) }
 
 global:
-    | t = ty; s = Ident "(" listTySt = params ")" "{" st = stmt "}" { GFuncDef(t,s,listTySt,st) }
+    | t = ty; s = Ident "(" listTySt = params ")"  st = stmt  { GFuncDef(t,s,listTySt,st) }
     | Extern t = ty s = Ident "(" listTySt = params ")" ";" { GFuncDecl (t,s,listTySt)}
     | t = ty s = Ident "=" e = expr ";" { GVarDef(t,s,e)}
     | Extern t = ty s = Ident ";" { GVarDecl(t, s) }
-    | Struct s = Ident "{" l = separated_list(";",pair(ty,Ident)) "}" ";" { Gstruct(s,l) }
+    | Struct s = Ident "{" l = list(terminated(pair(ty,Ident),";")) "}" ";" { Gstruct(s,l) }
 
 params:
     | l = separated_list(",", pair(ty, Ident)) { l }
@@ -95,9 +95,9 @@ stmt:
     | v = varassign ";" { v }
     | "{" l = list(stmt) "}" { SScope(l) }
     | If "(" e = expr ")" st = stmt opst = option(preceded(Else, stmt)) { SIf(e,st,opst) }
-    | While "(" e = expr ")" st = stmt { Swhile(e,st) }
+    | While "(" e = expr ")" st = stmt { SWhile(e,st) }
     | Break ";" { SBreak }
-    | Return eop = option (expr) ";" { SReturn(eop) }
+    | Return eop = option(expr) ";" { SReturn(eop) }
     | Delete "[" "]" s = Ident ";" { SDelete(s) }
     | For "(" v = varassign ";" e = expr ";" a = assign ")" st = stmt { SScope([v; SWhile(e, SScope([st;a]))]) }
 
@@ -108,21 +108,25 @@ varassign:
 assign:
     | s = Ident "(" l = list(expr) ")" { SExpr(ECall(s,l))}
     | l = lvalue "=" e0 = expr { match l with
-            | EArrayAccess(s1,e,s2) -> SArrayAssign(s1,e,s2,e0) 
+            | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,e0) 
             | EVar(s) -> SVarAssign(s, e0)
+            | _ -> failwith "Internal parser invariant violation"
           } 
 
     | l = lvalue "++" { match l with
-            | EArrayAccess(s1,e,s2) -> SArrayAssign(s1,e,s2,
-                EBinOp(BopAdd, EArrayAccess(s1,e,s2), Eint(1))) 
-            | EVar(s) -> SVarAssign(s, EBinOp(BopAdd,s,Eint(1)))
+            | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,
+                EBinOp(BopAdd, EArrayAccess(s1,e,sopt), EInt(1))) 
+            | EVar(s) -> SVarAssign(s, EBinOp(BopAdd,EVar(s),EInt(1)))
+            | _ -> failwith "Internal parser invariant violation"
+
           } 
 
     | l = lvalue "--" 
         { match l with
-            | EArrayAccess(s1,e,s2) -> SArrayAssign(s1,e,s2,
-                EBinOp(BopSub, EArrayAccess(s1,e,s2), Eint(1))) 
-            | EVar(s) -> SVarAssign(s, EBinOp(BopSub,s,Eint(1)))
+            | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,
+                EBinOp(BopSub, EArrayAccess(s1,e,sopt), EInt(1))) 
+            | EVar(s) -> SVarAssign(s, EBinOp(BopSub,EVar(s),EInt(1)))
+            | _ -> failwith "Internal parser invariant violation"
           }
 
 lvalue:
@@ -134,12 +138,31 @@ expr:
     | n = IntConst { EInt(n) }
     | c = CharConst { EChar(c) }
     | s = StringConst { EString(s) }
-    | e1 = expr bop = binop e2 = expr { EBinOp(bop, e1, e2) }
-    | uop = unop e = expr { EUnOp(uop, e)}
-    | s = Ident "(" l = list(expr) ")" { ECall(s,l) } 
+    | e1 = expr "+" e2 = expr { EBinOp(BopAdd, e1, e2) }
+    | e1 = expr "-" e2 = expr { EBinOp(BopSub, e1, e2) }
+    | e1 = expr "*" e2 = expr { EBinOp(BopMult, e1, e2) }
+    | e1 = expr "/" e2 = expr { EBinOp(BopDiv, e1, e2) }
+    | e1 = expr "%" e2 = expr { EBinOp(BopModulo, e1, e2) }
+    | e1 = expr ">" e2 = expr { EBinOp(BopGreater, e1, e2) }
+    | e1 = expr "<" e2 = expr { EBinOp(BopLesser, e1, e2) }
+    | e1 = expr ">=" e2 = expr { EBinOp(BopGreaterEq, e1, e2) }
+    | e1 = expr "<=" e2 = expr { EBinOp(BopLesserEq, e1, e2) }
+    | e1 = expr "==" e2 = expr { EBinOp(BopEqual, e1, e2) }
+    | e1 = expr "!=" e2 = expr { EBinOp(BopNotEq, e1, e2) }
+    | e1 = expr "&" e2 = expr { EBinOp(BopBitAnd, e1, e2) }
+    | e1 = expr "|" e2 = expr { EBinOp(BopBitOr, e1, e2) }
+    | e1 = expr "&&" e2 = expr { EBinOp(BopAnd, e1, e2) }
+    | e1 = expr "||" e2 = expr { EBinOp(BopOr, e1, e2) }
+    | e1 = expr "<<" e2 = expr { EBinOp(BopShiftLeft, e1, e2) }
+    | e1 = expr ">>" e2 = expr { EBinOp(BopShiftRight, e1, e2) }
+    | "!" e = expr { EUnOp(UnOpNegation, e)}
+    | "~" e = expr { EUnOp(UnOpBitFlip, e)}
+    | "-" e = expr %prec UMINUS { EUnOp(UnOpMinus, e)}
+    | s = Ident "(" l = separated_list(",",expr) ")" { ECall(s,l) } 
     | New t = ty "[" e = expr "]" { ENew(t, e) }
-    | s1 = Ident "[" e = expr "]" s2 = option(preceded(".", Ident))  { EArrayAccess(s1,e,s2)}
+    | s = Ident "[" e = expr "]" sopt = option(preceded(".", Ident))  { EArrayAccess(s,e,sopt)}
     | "(" e = expr ")" { e } (*ask abt this*)
+
 ty:
     | Void { TVoid }
     | Int { TInt }
@@ -147,7 +170,7 @@ ty:
     | s = Ident { TIdent(s)}
     | t = ty "*" { TPoint(t) }
 
-binop: 
+(*binop: 
     | "+" { BopAdd }
     | "-" { BopSub }
     | "*" { BopMult }
@@ -164,12 +187,12 @@ binop:
     | "&&" { BopAnd }
     | "||" { BopOr }
     | "<<" { BopShiftLeft }
-    | ">>" { BopShiftRight }
+    | ">>" { BopShiftRight }*)
 
 
-unop:
+(*unop:
     | "!" { UnOpNegation }
     | "~" { UnOpBitFlip }
-    | "-" { UnOpMinus }
+    | "-" %prec UMINUS { UnOpMinus }*)
 (*
 | "-" e = expr %prec UMINUS*)

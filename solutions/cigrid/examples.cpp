@@ -14,7 +14,6 @@ extern int putchar(int c);
 void empty(){
 }
 
-
 // Test one integer paramter and return statement (S)
 int one_param_return(int x){
   return x;
@@ -45,6 +44,7 @@ int call_two_args_var_expr(int x){
 }
 
  
+
 // Print characters and return without value (S)
 void print_char_consts(){
   putchar('A');

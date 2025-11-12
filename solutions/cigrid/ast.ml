@@ -23,7 +23,7 @@ type program =
 
 let char_print ins = let s = (match ins with
   | '\n' -> "\\n" 
-  | '\t' -> "\\t"
+  | '\t' -> "\\t" 
   | '\\' -> "\\\\"
   |  '\''-> "\\\'"
   |  '\"' -> "\\\""
@@ -33,7 +33,14 @@ let char_print ins = let s = (match ins with
 let string_print s =
   let buf = Buffer.create 20 in 
   String.iter( fun c ->
-    Buffer.add_string buf (char_print c) ) s;
+    Buffer.add_string buf (match c with
+      | '\n' -> "\\n" 
+  | '\t' -> "\\t" 
+  | '\\' -> "\\\\"
+  |  '\''-> "\\\'"
+  |  '\"' -> "\\\""
+  | c -> String.make 1 c 
+  ) ) s;
   "\"" ^ Buffer.contents buf ^ "\""
 
 
@@ -109,12 +116,15 @@ let rec pprint_stmt = function
 let pairList_print pairList = 
   let buf = Buffer.create 20 in 
     List.iter (fun (ty,s) -> 
-      Buffer.add_string buf ( (pprint_ty ty) ^ (string_print s))) pairList;
+      Buffer.add_string buf ( "("^(pprint_ty ty) ^","^ (string_print s) ^ ")")) pairList;
   "{"^ (Buffer.contents buf) ^"}"
 
 let pprint_global = function
-  | GFuncDef(t,s,listTySt,st) -> "GFuncDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ "," ^ (pprint_stmt st) ^ ")"
-  | GFuncDecl(t,s,listTySt) -> "GFuncDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")"
-  | GVarDef(t,s,e) -> "GVarDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pprint_expr e) ^ ")"
-  | GVarDecl(t, s) -> "GVarDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ ")"
-  | Gstruct(s, listTySt) -> "GStruct(" ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")"
+  | GFuncDef(t,s,listTySt,st) -> "GFuncDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ "," ^ (pprint_stmt st) ^ ")" ^ "\n"
+  | GFuncDecl(t,s,listTySt) -> "GFuncDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")" ^ "\n"
+  | GVarDef(t,s,e) -> "GVarDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pprint_expr e) ^ ")" ^ "\n"
+  | GVarDecl(t, s) -> "GVarDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ ")" ^ "\n"
+  | Gstruct(s, listTySt) -> "GStruct(" ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")" ^ "\n"
+
+let pprint_program = function
+  | Prog(globalList) ->  String.concat " " (List.map (pprint_global) globalList)
