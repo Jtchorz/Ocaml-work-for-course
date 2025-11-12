@@ -105,3 +105,16 @@ let rec pprint_stmt = function
       | None -> ""
       ) ^ ")" 
   | SDelete(s) -> "SDelete(" ^ (string_print s) ^ ")"
+
+let pairList_print pairList = 
+  let buf = Buffer.create 20 in 
+    List.iter (fun (ty,s) -> 
+      Buffer.add_string buf ( (pprint_ty ty) ^ (string_print s))) pairList;
+  "{"^ (Buffer.contents buf) ^"}"
+
+let pprint_global = function
+  | GFuncDef(t,s,listTySt,st) -> "GFuncDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ "," ^ (pprint_stmt st) ^ ")"
+  | GFuncDecl(t,s,listTySt) -> "GFuncDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")"
+  | GVarDef(t,s,e) -> "GVarDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pprint_expr e) ^ ")"
+  | GVarDecl(t, s) -> "GVarDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ ")"
+  | Gstruct(s, listTySt) -> "GStruct(" ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")"
