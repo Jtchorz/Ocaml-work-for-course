@@ -95,6 +95,7 @@ let parse filename =
          exit 1
       in printf "%s" (pprint_program res)
 
+      
 let speclist =
        [("--pretty-print", Arg.Set pretty_print, "Pretty print ast");
        ("--pretty-tok", Arg.Set pretty_tok, "Pretty print all tokens");
