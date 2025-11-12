@@ -105,7 +105,7 @@ varassign:
     | a = assign { a }  (*variable assignment etc*)
 
 assign:
-    | s = Ident "(" l = list(expr) ")" { SExpr(ECall(s,l))}
+    | s = Ident "(" l = separated_list(",",expr) ")" { SExpr(ECall(s,l))}
     | l = lvalue "=" e0 = expr { match l with
             | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,e0) 
             | EVar(s) -> SVarAssign(s, e0)

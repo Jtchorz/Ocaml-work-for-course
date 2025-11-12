@@ -1,4 +1,3 @@
 void foo() {
-  return '
-';
+  zed(1, 2);
 }
