@@ -12,8 +12,8 @@ let mline_comment = "/*" "*/"
 let ident = ['_' 'a'-'z' 'A'-'Z']['_' 'a'-'z' 'A'-'Z' '0'-'9']*
 let number = ('0'|['1'-'9']['0'-'9']*) | ('0'['x' 'X']['0'-'9' 'a'-'f' 'A'-'F']+)
 
-let character = [^ '\\' '"'] | ('\\'['n''t''\\''\'''\"'])
-let s_character = [^ '\\' '\"'] | ('\\'['n''t''\\''\'''\"'])
+let character = [^ '\\' '"' '\n' '\t' '\\' '\"'] | ('\\'['n''t''\\''\'''\"'])
+let s_character = [^ '\\' '\"' '\n' '\t' '\\' '\''] | ('\\'['n''t''\\''\'''\"'])
 
 rule token = parse
     | line_comment

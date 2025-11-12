@@ -56,7 +56,7 @@ let pprint_binop = function
   | BopDiv -> "/"
   | BopModulo -> "%"
   | BopGreater -> ">"
-  | BopLesser -> ">="
+  | BopLesser -> "<"
   | BopGreaterEq -> ">="
   | BopLesserEq -> "<="
   | BopEqual -> "=="
