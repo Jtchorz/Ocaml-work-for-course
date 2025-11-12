@@ -5,7 +5,7 @@ let usage_msg = "cigrid [--pretty-print] <filename>"
 let pretty_print = ref false 
 let input_file = ref ""
 
-
+let current = ref 0
 (*let printtok tok =
    match tok with
   | Break -> "Break"
@@ -87,7 +87,13 @@ let anon_fun f =
    input_file := f
 
 let () =
-   Arg.parse speclist anon_fun usage_msg;
-   if !pretty_print then parse !input_file
-   else
-      printf"unknown error from input args"; exit 1
+   try(
+   Arg.parse_argv ~current Sys.argv speclist anon_fun usage_msg;
+   if !pretty_print then (parse !input_file; exit 0)
+   else(
+      printf"unknown error from input args"; exit 1)
+   )
+   with
+   | Arg.Help msg -> printf "%s\n" msg; exit 0
+   | Arg.Bad msg -> printf "%s\n" msg; exit 1
+   | _ -> printf "Unexpected error from input args"; exit 1
