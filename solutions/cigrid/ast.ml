@@ -80,31 +80,31 @@ let rec pprint_expr = function
   | EInt(n) -> "EInt(" ^ (string_of_int n) ^ ")" 
   | EChar(c) -> "EChar(" ^ (char_print c ) ^ ")"
   | EString(s) ->  "Estring(" ^ (string_print s) ^ ")"
-  | EBinOp(bop, e1, e2)  -> "EBinOp(" ^ (pprint_binop bop) ^ "," ^ (pprint_expr e1) ^ "," ^ (pprint_expr e2) ^ ")"
-  | EUnOp(uop, e) ->  "EUnOp(" ^ (pprint_unop uop) ^ "," ^ (pprint_expr e) ^ ")"
-  | ECall(s, l) -> "ECall(" ^ (string_print s) ^ "," ^ "{" ^ (String.concat " " (List.map pprint_expr l)) ^ "})"
-  | ENew(t, e) ->  "ENew(" ^ (pprint_ty t) ^ "," ^ (pprint_expr e) ^ ")"
-  | EArrayAccess(s, e, sopt) -> "EArrayAccess(" ^ (string_print s) ^ "," ^ (pprint_expr e) ^ "," ^ 
+  | EBinOp(bop, e1, e2)  -> "EBinOp(" ^ (pprint_binop bop) ^ ", " ^ (pprint_expr e1) ^ ", " ^ (pprint_expr e2) ^ ")"
+  | EUnOp(uop, e) ->  "EUnOp(" ^ (pprint_unop uop) ^ ", " ^ (pprint_expr e) ^ ")"
+  | ECall(s, l) -> "ECall(" ^ (string_print s) ^ ", " ^ "{" ^ (String.concat " " (List.map pprint_expr l)) ^ "})"
+  | ENew(t, e) ->  "ENew(" ^ (pprint_ty t) ^ ", " ^ (pprint_expr e) ^ ")"
+  | EArrayAccess(s, e, sopt) -> "EArrayAccess(" ^ (string_print s) ^ ", " ^ (pprint_expr e) ^ ", " ^ 
     (match sopt with
       | Some(s) -> string_print s
       | None -> ""
       ) ^ ")"
 let rec pprint_stmt = function
   | SExpr(e) -> "SExpr(" ^ (pprint_expr e ) ^ ")"
-  | SVarDef(t, s, e) -> "SVarDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pprint_expr e) ^ ")"
-  | SVarAssign(s,e) -> "SVarAssign("  ^ (string_print s) ^ "," ^ (pprint_expr e) ^ ")"
-  | SArrayAssign(s,e1,sopt,e2) -> "SArrayAssign(" ^ (string_print s) ^ "," ^ (pprint_expr e1) ^ "," ^ 
+  | SVarDef(t, s, e) -> "SVarDef(" ^ (pprint_ty t) ^ ", " ^ (string_print s) ^ ", " ^ (pprint_expr e) ^ ")"
+  | SVarAssign(s,e) -> "SVarAssign("  ^ (string_print s) ^ ", " ^ (pprint_expr e) ^ ")"
+  | SArrayAssign(s,e1,sopt,e2) -> "SArrayAssign(" ^ (string_print s) ^ ", " ^ (pprint_expr e1) ^ ", " ^ 
     (match sopt with
       | Some(s) -> string_print s
       | None -> ""
-      ) ^ "," ^ (pprint_expr e2 ) ^ ")"
+      ) ^ ", " ^ (pprint_expr e2 ) ^ ")"
   | SScope(l) ->  "SScope({" ^ (String.concat " " (List.map pprint_stmt l)) ^ "})"
-  | SIf(e,st,opst) -> "SIf(" ^ (pprint_expr e) ^ "," ^ (pprint_stmt st) ^ "," ^ 
+  | SIf(e,st,opst) -> "SIf(" ^ (pprint_expr e) ^ ", " ^ (pprint_stmt st) ^ ", " ^ 
     (match opst with
       | Some(st1) -> pprint_stmt st1
       | None -> ""
       ) ^ ")"
-  | SWhile(e, st) ->  "SWhile(" ^ (pprint_expr e) ^ "," ^  (pprint_stmt st) ^ ")"
+  | SWhile(e, st) ->  "SWhile(" ^ (pprint_expr e) ^ ", " ^  (pprint_stmt st) ^ ")"
   | SBreak -> "SBreak"
   | SReturn(eop) -> "SReturn(" ^  
     (match eop with
@@ -116,15 +116,15 @@ let rec pprint_stmt = function
 let pairList_print pairList = 
   let buf = Buffer.create 20 in 
     List.iter (fun (ty,s) -> 
-      Buffer.add_string buf ( "("^(pprint_ty ty) ^","^ (string_print s) ^ ")")) pairList;
+      Buffer.add_string buf ( "("^(pprint_ty ty) ^", "^ (string_print s) ^ ")")) pairList;
   "{"^ (Buffer.contents buf) ^"}"
 
 let pprint_global = function
-  | GFuncDef(t,s,listTySt,st) -> "GFuncDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ "," ^ (pprint_stmt st) ^ ")" ^ "\n"
-  | GFuncDecl(t,s,listTySt) -> "GFuncDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")" ^ "\n"
-  | GVarDef(t,s,e) -> "GVarDef(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ "," ^ (pprint_expr e) ^ ")" ^ "\n"
-  | GVarDecl(t, s) -> "GVarDecl(" ^ (pprint_ty t) ^ "," ^ (string_print s) ^ ")" ^ "\n"
-  | Gstruct(s, listTySt) -> "GStruct(" ^ (string_print s) ^ "," ^ (pairList_print listTySt) ^ ")" ^ "\n"
+  | GFuncDef(t,s,listTySt,st) -> "GFuncDef(" ^ (pprint_ty t) ^ ", " ^ (string_print s) ^ ", " ^ (pairList_print listTySt) ^ ", " ^ (pprint_stmt st) ^ ")" ^ "\n"
+  | GFuncDecl(t,s,listTySt) -> "GFuncDecl(" ^ (pprint_ty t) ^ ", " ^ (string_print s) ^ ", " ^ (pairList_print listTySt) ^ ")" ^ "\n"
+  | GVarDef(t,s,e) -> "GVarDef(" ^ (pprint_ty t) ^ ", " ^ (string_print s) ^ ", " ^ (pprint_expr e) ^ ")" ^ "\n"
+  | GVarDecl(t, s) -> "GVarDecl(" ^ (pprint_ty t) ^ ", " ^ (string_print s) ^ ")" ^ "\n"
+  | Gstruct(s, listTySt) -> "GStruct(" ^ (string_print s) ^ ", " ^ (pairList_print listTySt) ^ ")" ^ "\n"
 
 let pprint_program = function
   | Prog(globalList) ->  String.concat " " (List.map (pprint_global) globalList)

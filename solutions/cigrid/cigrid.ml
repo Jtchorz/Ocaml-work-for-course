@@ -79,7 +79,7 @@ let parse filename =
          printf "Error a comment run away. The comment starts at line %d \n" n; exit 1
       | Parser.Error -> 
          printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; exit 1
-      in printf "%s\n" (pprint_program res)
+      in printf "%s" (pprint_program res)
 
 let speclist =
        [("--pretty-print", Arg.Set pretty_print, "Pretty print ast")]
