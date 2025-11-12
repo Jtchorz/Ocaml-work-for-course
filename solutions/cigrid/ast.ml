@@ -35,11 +35,11 @@ let string_print s =
   String.iter( fun c ->
     Buffer.add_string buf (match c with
       | '\n' -> "\\n" 
-  | '\t' -> "\\t" 
-  | '\\' -> "\\\\"
-  |  '\''-> "\\\'"
-  |  '\"' -> "\\\""
-  | c -> String.make 1 c 
+      | '\t' -> "\\t" 
+      | '\\' -> "\\"
+      |  '\''-> "\\\'"
+      |  '\"' -> "\\\""
+      | c -> String.make 1 c 
   ) ) s;
   "\"" ^ Buffer.contents buf ^ "\""
 
