@@ -68,7 +68,28 @@ open Ast
 %right "!" "~" UMINUS
 
 %start main 
+
 %type <program> main
+%type <program> program
+%type <global> global
+%type <(ty * string) list> params
+%type <stmt> stmt
+%type <stmt> varassign
+%type <stmt> assign
+%type <expr> lvalue
+%type <expr> expr
+%type <ty> ty
+
+%type <global list> list(global)
+%type <stmt list> list(stmt)
+%type <(ty * string) list> list(terminated(pair(ty,Ident),SemiColon))
+%type <expr list> loption(separated_nonempty_list(Comma,expr))
+%type <(ty * string) list> loption(separated_nonempty_list(Comma,pair(ty,Ident)))
+%type <expr option> option(expr)
+%type <string option> option(preceded(Dot,Ident))
+%type <stmt option> option(preceded(Else,stmt))
+%type <expr list> separated_nonempty_list(Comma,expr)
+%type <(ty * string) list> separated_nonempty_list(Comma,pair(ty,Ident))
 
 %%
 
@@ -164,22 +185,23 @@ expr:
 
 (*try doing a right recursive rewrite*)
 
-ty:
+(*ty:
+    | spt = spec_ty "*"{ TPoint(spt) }
     | spt = spec_ty { spt }
-    | spt = spec_ty "*" { TPoint(spt) }
+    
 
 spec_ty:
     | Void { TVoid }
     | Int { TInt }
     | Char { TChar }
     | s = Ident { TIdent(s)}
-
-(*ty:
+*)
+ty:
     | Void { TVoid }
     | Int { TInt }
     | Char { TChar }
     | s = Ident { TIdent(s)}
-    | t = ty "*" { TPoint(t) }*)
+    | t = ty "*" { TPoint(t) }
 
 (*binop: 
     | "+" { BopAdd }

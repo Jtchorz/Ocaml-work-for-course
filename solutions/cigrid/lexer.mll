@@ -115,9 +115,9 @@ rule token = parse
     | [',']
         { Comma }
     | ['[']
-        { RSquare }
-    | [']']
         { LSquare }
+    | [']']
+        { RSquare }
     | ['.']
         { Dot }
     | eof
