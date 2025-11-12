@@ -56,25 +56,25 @@ let rec depth tree =
 
 let tr = Node("a",Node("b",Leaf(1),Leaf(2)),Leaf(3))
 
-   let read_input = 
-      let rec work str =
-            match (String.split_on_char ':' str) with
-            | [name; s] when name = "Leaf" -> 
-               (try (Leaf (int_of_string s)) with 
-               | Failure(_) -> exit 1)
-            | [name; s] when name = "Node" -> 
-               let ltree = (work (input_line stdin)) in 
-               let rtree = (work (input_line stdin)) in 
-               Node(s,ltree,rtree)
-            | _ -> exit 1
-        
-      in
-      let out = 
-         try work (input_line stdin) with
-         |End_of_file -> exit 1
-      in
-      try (let _ = input_line stdin in exit 1) with
-         |End_of_file -> out
+let read_input = 
+   let rec work str =
+         match (String.split_on_char ':' str) with
+         | [name; s] when name = "Leaf" -> 
+            (try (Leaf (int_of_string s)) with 
+            | Failure(_) -> exit 1)
+         | [name; s] when name = "Node" -> 
+            let ltree = (work (input_line stdin)) in 
+            let rtree = (work (input_line stdin)) in 
+            Node(s,ltree,rtree)
+         | _ -> exit 1
+      
+   in
+   let out = 
+      try work (input_line stdin) with
+      |End_of_file -> exit 1
+   in
+   try (let _ = input_line stdin in exit 1) with
+      |End_of_file -> outx
 let main =
    let len = Array.length Sys.argv in 
    if len <> 2 then 
