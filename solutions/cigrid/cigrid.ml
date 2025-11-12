@@ -5,6 +5,8 @@ open Parser
 let usage_msg = "cigrid [--pretty-print] <filename>"
 let pretty_print = ref false 
 let pretty_tok = ref false
+
+let precise_error = ref false
 let input_file = ref ""
 
 let current = ref 0
@@ -84,12 +86,15 @@ let parse filename =
       | Lexer.UnterminatedComment(n) -> 
          printf "Error a comment run away. The comment starts at line %d \n" n; exit 1
       | Parser.Error -> 
-         printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; exit 1
+         if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
+         printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; 
+         exit 1
       in printf "%s" (pprint_program res)
 
 let speclist =
        [("--pretty-print", Arg.Set pretty_print, "Pretty print ast");
-       ("--pretty-tok", Arg.Set pretty_tok, "Pretty print all tokens") ]
+       ("--pretty-tok", Arg.Set pretty_tok, "Pretty print all tokens");
+       ("--line-error", Arg.Set precise_error, "only print line number on errors") ]
 let anon_fun f =
    input_file := f
 
