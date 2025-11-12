@@ -1,6 +1,6 @@
-type unop = UopMinus | UopBitFlip | UopNegation
+type unop = UnOpMinus | UnOpBitFlip | UnOpNegation
 type binop = BopAdd | BopSub | BopMult | BopDiv | BopModulo | BopGreater | BopLesser
-  | BopGreaterEq | BopLesserEq | BopEqual | BopNotEq | BopBitAnd | BopBinOr | BopAnd 
+  | BopGreaterEq | BopLesserEq | BopEqual | BopNotEq | BopBitAnd | BopBitOr | BopAnd 
   | BopOr | BopShiftLeft | BopShiftRight
 
 type ty = TVoid | TInt | TChar 
@@ -18,5 +18,5 @@ type stmt = SExpr of expr | SVarDef of ty * string * expr | SVarAssign of string
 type global = GFuncDef of ty * string * (ty * string) list * stmt | GFuncDecl of ty * string * (ty * string) list 
   | GVarDef of ty * string * expr | GVarDecl of ty * string | Gstruct of string * (ty * string) list 
 
-type prog =
+type program =
   | Prog of global list

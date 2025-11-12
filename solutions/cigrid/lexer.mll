@@ -38,6 +38,7 @@ rule token = parse
             | "return" -> Return
             | "struct" -> Struct 
             | "void" -> Void
+            | "while" -> While
             | s -> Ident(s)
         }
     | number as n
@@ -69,6 +70,10 @@ rule token = parse
         { AndAnd }
     | "||"
         { Or }
+    | "++"
+        { PlusPlus }
+    | "--"
+        { MinusMinus }
     | ['+']
         { Plus }
     | ['-']
