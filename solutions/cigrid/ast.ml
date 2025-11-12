@@ -69,9 +69,9 @@ let pprint_binop = function
   | BopShiftRight -> ">>"
 
 let rec pprint_ty = function
-  | TVoid -> "Tvoid"
+  | TVoid -> "TVoid"
   | TInt -> "TInt"
-  | TChar -> "Tchar"
+  | TChar -> "TChar"
   | TIdent(s) -> "TIdent(" ^ (string_print s) ^ ")"
   | TPoint(t) -> "TPoint(" ^ (pprint_ty t) ^ ")" 
 
