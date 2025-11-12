@@ -86,6 +86,7 @@ let parse filename =
          printf "Error, unexpected character at line %d, the character is %c \n" lexbuf.lex_curr_p.pos_lnum c; 
          exit 1
       | Lexer.UnterminatedComment(n) -> 
+         if !precise_error then (eprintf "%d\n" n);
          printf "Error a comment run away. The comment starts at line %d \n" n; 
          exit 1
       | Parser.Error -> 

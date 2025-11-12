@@ -1,3 +1,7 @@
-void foo() {
-  return "fo\o";
-}
+/* Start of multi-line
+// This is not a line comment, it part of the multi-line comment */
+void foo() {}
+
+/* Unclosed multi-line comment
+// This is an additional comment that does not close the multi-line comment
+void bar() {}
