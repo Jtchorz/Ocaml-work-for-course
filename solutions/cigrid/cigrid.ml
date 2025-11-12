@@ -82,9 +82,12 @@ let parse filename =
    let res =
       try Parser.main Lexer.token lexbuf with
       | Lexer.Error(c) -> 
-         printf "Error, unexpected character at line %d, the character is %c \n" lexbuf.lex_curr_p.pos_lnum c; exit 1
+         if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
+         printf "Error, unexpected character at line %d, the character is %c \n" lexbuf.lex_curr_p.pos_lnum c; 
+         exit 1
       | Lexer.UnterminatedComment(n) -> 
-         printf "Error a comment run away. The comment starts at line %d \n" n; exit 1
+         printf "Error a comment run away. The comment starts at line %d \n" n; 
+         exit 1
       | Parser.Error -> 
          if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
          printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; 
