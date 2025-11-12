@@ -67,7 +67,6 @@ open Ast
 %left "*" "/" "%"
 %right "!" "~" UMINUS
 
-
 %start main 
 %type <program> main
 
@@ -163,12 +162,24 @@ expr:
     | s = Ident "[" e = expr "]" sopt = option(preceded(".", Ident))  { EArrayAccess(s,e,sopt)}
     | "(" e = expr ")" { e } (*ask abt this*)
 
+(*try doing a right recursive rewrite*)
+
 ty:
+    | spt = spec_ty { spt }
+    | spt = spec_ty "*" { TPoint(spt) }
+
+spec_ty:
     | Void { TVoid }
     | Int { TInt }
     | Char { TChar }
     | s = Ident { TIdent(s)}
-    | t = ty "*" { TPoint(t) }
+
+(*ty:
+    | Void { TVoid }
+    | Int { TInt }
+    | Char { TChar }
+    | s = Ident { TIdent(s)}
+    | t = ty "*" { TPoint(t) }*)
 
 (*binop: 
     | "+" { BopAdd }

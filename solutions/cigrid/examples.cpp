@@ -191,7 +191,7 @@ struct S2 {
   char y;
 };
 
-
+/*
 // Access and updates of structures and arrays (G)
 void struct_arrays(){ 
   S2 * a1 = new S2[5]; 
@@ -218,7 +218,7 @@ char string_test(int x){
   char * a = "Test\n\t\\\'\"";
   return a[x];
 }
-
+*/
 
 // Print a signed integer in decimal form (S)
 void print_int(int x){
@@ -242,7 +242,7 @@ void print_int_ln(int x){
   putchar('\n');
 }
 
-
+/*
 // Print a string (G)
 void print_string(char* s){
   int i = 0;

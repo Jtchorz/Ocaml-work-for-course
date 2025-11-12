@@ -1,6 +1,11 @@
 open Printf
 open Ast 
 
+let usage_msg = "cigrid [--pretty-print] <filename>"
+let pretty_print = ref false 
+let input_file = ref ""
+
+
 (*let printtok tok =
    match tok with
   | Break -> "Break"
@@ -64,8 +69,8 @@ let rec prettyprint lexbuf =
    | Eof -> exit 0
    | _ as tok -> printf "%s\n" (printtok tok); prettyprint lexbuf
    *)
-let main = 
-   let lexbuf = Lexing.from_channel stdin in 
+let parse filename = 
+   let lexbuf = Lexing.from_channel (open_in filename) in 
    let res =
       try Parser.main Lexer.token lexbuf with
       | Lexer.Error(c) -> 
@@ -75,3 +80,14 @@ let main =
       | Parser.Error -> 
          printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; exit 1
       in printf "%s\n" (pprint_program res)
+
+let speclist =
+       [("--pretty-print", Arg.Set pretty_print, "Pretty print ast")]
+let anon_fun f =
+   input_file := f
+
+let () =
+   Arg.parse speclist anon_fun usage_msg;
+   if !pretty_print then parse !input_file
+   else
+      printf"unknown error from input args"; exit 1
