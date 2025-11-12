@@ -16,10 +16,10 @@ let printtok tok =
   | Struct -> "Struct"
   | Void -> "Void"
 
-  | Ident s -> "Ident(" ^ s ^ ")"
-  | IntConst n -> "IntConst(" ^ string_of_int n ^ ")"
-  | CharConst c -> sprintf "CharConst(%c)" c
-  | StringConst s -> "StringConst(" ^ s ^ ")"
+  | Ident(s) -> "Ident(" ^ s ^ ")"
+  | IntConst(n) -> "IntConst(" ^ string_of_int n ^ ")"
+  | CharConst(c) -> sprintf "CharConst(%c)" c
+  | StringConst(s) -> "StringConst(" ^ s ^ ")"
 
   | Exclamation -> "!"
   | Tylde -> "~"

@@ -89,7 +89,7 @@ global:
     | Struct s = Ident "{" l = separated_list(";",pair(ty,Ident)) "}" ";" { Gstruct(s,l) }
 
 params:
-    | 
+    | l = separated_list(",", pair(ty, Ident)) { l }
 
 stmt:
     | v = varassign ";" { v }
