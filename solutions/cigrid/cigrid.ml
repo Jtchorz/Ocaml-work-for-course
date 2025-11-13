@@ -1,7 +1,8 @@
 open Printf
 open Ast 
 open Parser
-//comment just to grade, XD
+(*comment just to grade, XD*)
+
 let usage_msg = "cigrid [--pretty-print] <filename>"
 let pretty_print = ref false 
 let pretty_tok = ref false
