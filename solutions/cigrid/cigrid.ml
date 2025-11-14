@@ -1,12 +1,13 @@
 open Printf
 open Ast 
 open Parser
+open Typecheck
 (*comment just to grade, XD*)
 
 let usage_msg = "cigrid [--pretty-print] <filename>"
 let pretty_print = ref false 
 let pretty_tok = ref false
-
+let name_analysis = ref false
 let precise_error = ref false
 let input_file = ref ""
 
@@ -71,7 +72,7 @@ let rec prettyprint lexbuf =
    | Eof -> exit 0
    | _ as tok -> printf "%s\n" (printtok tok); prettyprint lexbuf
 
-   let rec prettytok filename = 
+let rec prettytok filename = 
    let lexbuf = Lexing.from_channel (open_in filename) in 
    try ignore(prettyprint lexbuf) with
    | Lexer.Error(c) -> printf "Error, unexpected character at line %d, the character is %c \n" lexbuf.lex_curr_p.pos_lnum c; exit 1
@@ -94,23 +95,28 @@ let parse filename =
          if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
          printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; 
          exit 1
-      in printf "%s" (pprint_program res)
+      in res
 
       
 let speclist =
        [("--pretty-print", Arg.Set pretty_print, "Pretty print ast");
        ("--pretty-tok", Arg.Set pretty_tok, "Pretty print all tokens");
-       ("--line-error", Arg.Set precise_error, "only print line number on errors") ]
+       ("--line-error", Arg.Set precise_error, "only print line number on errors");
+      ("--name-analysis", Arg.Set name_analysis, "analyze variable names in fucntion definitions");]
 let anon_fun f =
    input_file := f
 
 let () =
    try(
    Arg.parse_argv ~current Sys.argv speclist anon_fun usage_msg;
-   if !pretty_tok then (prettytok !input_file; exit 0) else (
-   if !pretty_print then (parse !input_file; exit 0)
-   else(
-      printf"unknown error from input args"; exit 1)
+   if !pretty_tok then (
+      prettytok !input_file; 
+      exit 0
+   ) else (
+      let ast = parse !input_file in
+      if !pretty_print then (printf "%s" (pprint_program ast));
+      if !name_analysis then (name_check_program ast);
+      exit 0
    ))
    with
    | Arg.Help msg -> printf "%s\n" msg; exit 0

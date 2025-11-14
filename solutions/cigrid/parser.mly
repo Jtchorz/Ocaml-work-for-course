@@ -183,19 +183,6 @@ expr:
     | s = Ident "[" e = expr "]" sopt = option(preceded(".", Ident))  { EArrayAccess(s,e,sopt)}
     | "(" e = expr ")" { e } (*ask abt this*)
 
-(*try doing a right recursive rewrite*)
-
-(*ty:
-    | spt = spec_ty "*"{ TPoint(spt) }
-    | spt = spec_ty { spt }
-    
-
-spec_ty:
-    | Void { TVoid }
-    | Int { TInt }
-    | Char { TChar }
-    | s = Ident { TIdent(s)}
-*)
 ty:
     | Void { TVoid }
     | Int { TInt }
@@ -220,12 +207,10 @@ ty:
     | "&&" { BopAnd }
     | "||" { BopOr }
     | "<<" { BopShiftLeft }
-    | ">>" { BopShiftRight }*)
+    | ">>" { BopShiftRight }
 
 
-(*unop:
+unop:
     | "!" { UnOpNegation }
     | "~" { UnOpBitFlip }
     | "-" %prec UMINUS { UnOpMinus }*)
-(*
-| "-" e = expr %prec UMINUS*)

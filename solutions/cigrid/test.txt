@@ -1,7 +1,59 @@
-/* Start of multi-line
-// This is not a line comment, it part of the multi-line comment */
-void foo() {}
+//ok, so let's try this bs
 
-/* Unclosed multi-line comment
-// This is an additional comment that does not close the multi-line comment
-void bar() {}
+extern int putchar(int c);
+/*
+void struct_arrays(){ 
+  S2 * a1 = new S2[5]; 
+  a1[2].x = 3;
+  a1[2].x++;
+  a1[2].x--;
+  int y = a1[2].y + 1;
+  delete[] a1;
+}
+
+void print_char_consts(){
+  putchar('A');
+  int x =1;
+  putchar('A');
+  return;
+}
+// not allowed doubly so
+void print_char_consts(){
+  putchar("lala");
+  return;
+}
+//allowed, but change signature to test later
+int putchar(int c){
+    return c;
+}
+
+void arith_assignments(int x, int y, int z){
+  x = x + 1;
+  x = x - y * 8;
+  y = 12 % z / 3;
+}
+*/
+// If statement and if-then-else statement (S)
+int if_then_else(int x, int y){
+  if(x == y)
+    return y;
+  else 
+    return x;
+  
+  if(x > 0){
+    if(x == 3){
+      int z = x;
+      x = z + 1;
+      
+      return x;
+    }
+  }
+  else{
+    x = 7;
+    return x + 1;
+  }
+  int z = 0;
+  return x;
+}
+
+
