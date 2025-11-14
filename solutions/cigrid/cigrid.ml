@@ -2,6 +2,7 @@ open Printf
 open Ast 
 open Parser
 open Namecheck
+open Typecheck
 (*comment just to grade, XD*)
 
 let usage_msg = "cigrid [--pretty-print] <filename>"
@@ -9,6 +10,7 @@ let pretty_print = ref false
 let pretty_tok = ref false
 let name_analysis = ref false
 let precise_error = ref false
+let type_check = ref false
 let input_file = ref ""
 
 let current = ref 0
@@ -102,7 +104,8 @@ let speclist =
        [("--pretty-print", Arg.Set pretty_print, "Pretty print ast");
        ("--pretty-tok", Arg.Set pretty_tok, "Pretty print all tokens");
        ("--line-error", Arg.Set precise_error, "only print line number on errors");
-      ("--name-analysis", Arg.Set name_analysis, "analyze variable names in fucntion definitions");]
+      ("--name-analysis", Arg.Set name_analysis, "analyze variable names in fucntion definitions");
+      ("--type-check", Arg.Set type_check, "simple type analysis")]
 let anon_fun f =
    input_file := f
 
@@ -116,10 +119,34 @@ let () =
       let ast = parse !input_file in
       if !pretty_print then (printf "%s" (pprint_program ast));
       if !name_analysis then (name_check_program ast);
+      if !type_check then (type_check_program ast);
       exit 0
    ))
-   with
+   with 
    | Arg.Help msg -> printf "%s\n" msg; exit 0
    | Arg.Bad msg -> printf "%s\n" msg; exit 1
-   | _ -> printf "Unexpected error from input args"; exit 1
-   
+   | DoubleDecl (s, n) -> 
+      printf "Error, double decl of %s\n" s;
+      eprintf "%d\n" n; 
+   | UndeclaredVariable (s,n) -> 
+      printf "Error, undeclared variable %s\n" s; 
+      eprintf "%d\n" n;
+   | UndeclaredFunction (s,n) -> 
+      printf "Error, undeclared function %s\n" s; 
+      eprintf "%d\n" n; 
+   | UndeclaredStruct (s,n) -> 
+      printf "Error, undeclared struct %s\n" s; 
+      eprintf "%d\n" n;  
+   | TypeMismatch (s,n) -> 
+      printf "Error, type mismatch of %s\n" s; 
+      eprintf "%d\n" n;
+   | IndexTypeMismatch (s,n) -> 
+      printf "Error, Index is not int %s\n" s; 
+      eprintf "%d\n" n;
+   | ConditionMismatch (n) ->
+      printf "Error, Condition is type void \n"; 
+      eprintf "%d\n" n;
+   | IllegalPointerOperation (n) ->
+      printf "Error, Illegal pointer operation \n"; 
+      eprintf "%d\n" n;
+   exit 2

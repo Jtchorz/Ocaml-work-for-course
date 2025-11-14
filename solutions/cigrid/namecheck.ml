@@ -1,6 +1,6 @@
 open Printf
 open Ast 
-open Hashtbl
+open Hashtbl(*
 exception DoubleDecl  of string
 exception UndeclaredVariable  of string
 
@@ -50,20 +50,26 @@ let rec name_check_expr hash e =
     | Some(_) -> name_check_expr hash e; 
     | None ->  printf "undeclared array name%s \n" s; exit 2
     )
- let rec name_check_stmt hash st =
+ let rec type_check_stmt hash st =
   match st with 
   | SExpr(e) -> 
-    name_check_expr hash e; 
-    hash
+    Pair.make (hash, type_check_expr hash e)
+    
   | SVarDef(t, s, e) ->
-    name_check_expr hash e;
+    let exprTy = type_check_expr hash e in
     (match find_opt hash s with
     | Some(_) -> printf "Double declaration of a variable %s \n" s; exit 2
-    | None ->  add hash s t; hash 
+    | None ->  
+      if t = exprTy then(
+        add hash s t; 
+        hash
+      )
+      else
+        printf "type mismatch"
     )
 
   | SVarAssign(s,e) -> 
-    name_check_expr hash e; 
+    type_check_expr hash e; 
     (match find_opt hash s with
     | Some(_) -> hash
     | None -> printf "undeclared variable %s \n" s; exit 2
@@ -115,7 +121,7 @@ let name_check_global  = function
   | GVarDef(t,s,e) -> ()
   | GVarDecl(t, s) -> ()
   | Gstruct(s, listTySt) -> ()
-
-let name_check_program = function
-  | Prog(globalList) -> List.iter (name_check_global) globalList
+*)
+let name_check_program ast = ()(*function
+  | Prog(globalList) -> List.iter (name_check_global) globalList*)
   

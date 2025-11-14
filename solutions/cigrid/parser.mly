@@ -1,6 +1,8 @@
 %{
 open Ast
+let line pos = pos.Lexing.pos_lnum
 %}
+
 
 %token Break
 %token Char
@@ -102,85 +104,85 @@ program:
         { Prog(l) }
 
 global:
-    | t = ty; s = Ident "(" listTySt = params ")"  st = stmt  { GFuncDef(t,s,listTySt,st) }
-    | Extern t = ty s = Ident "(" listTySt = params ")" ";" { GFuncDecl (t,s,listTySt)}
-    | t = ty s = Ident "=" e = expr ";" { GVarDef(t,s,e)}
-    | Extern t = ty s = Ident ";" { GVarDecl(t, s) }
-    | Struct s = Ident "{" l = list(terminated(pair(ty,Ident),";")) "}" ";" { Gstruct(s,l) }
+    | t = ty; s = Ident "(" listTySt = params ")"  st = stmt  { GFuncDef(t,s,listTySt,st,line $startpos) }
+    | Extern t = ty s = Ident "(" listTySt = params ")" ";" { GFuncDecl (t,s,listTySt,line $startpos)}
+    | t = ty s = Ident "=" e = expr ";" { GVarDef(t,s,e,line $startpos)}
+    | Extern t = ty s = Ident ";" { GVarDecl(t, s,line $startpos) }
+    | Struct s = Ident "{" l = list(terminated(pair(ty,Ident),";")) "}" ";" { Gstruct(s,l,line $startpos) }
 
 params:
     | l = separated_list(",", pair(ty, Ident)) { l }
 
 stmt:
     | v = varassign ";" { v }
-    | "{" l = list(stmt) "}" { SScope(l) }
-    | If "(" e = expr ")" st = stmt opst = option(preceded(Else, stmt)) { SIf(e,st,opst) }
-    | While "(" e = expr ")" st = stmt { SWhile(e,st) }
-    | Break ";" { SBreak }
-    | Return eop = option(expr) ";" { SReturn(eop) }
-    | Delete "[" "]" s = Ident ";" { SDelete(s) }
-    | For "(" v = varassign ";" e = expr ";" a = assign ")" st = stmt { SScope([v; SWhile(e, SScope([st;a]))]) }
+    | "{" l = list(stmt) "}" { SScope(l,line $startpos) }
+    | If "(" e = expr ")" st = stmt opst = option(preceded(Else, stmt)) { SIf(e,st,opst,line $startpos) }
+    | While "(" e = expr ")" st = stmt { SWhile(e,st,line $startpos) }
+    | Break ";" { SBreak(line $startpos) }
+    | Return eop = option(expr) ";" { SReturn(eop,line $startpos) }
+    | Delete "[" "]" s = Ident ";" { SDelete(s,line $startpos) }
+    | For "(" v = varassign ";" e = expr ";" a = assign ")" st = stmt { SScope([v; SWhile(e, SScope([st;a],line $startpos),line $startpos)],line $startpos) }
 
 varassign:
-    | t = ty s = Ident "=" e = expr { SVarDef(t,s,e) } (*variable def*)
+    | t = ty s = Ident "=" e = expr { SVarDef(t,s,e,line $startpos) } (*variable def*)
     | a = assign { a }  (*variable assignment etc*)
 
 assign:
-    | s = Ident "(" l = separated_list(",",expr) ")" { SExpr(ECall(s,l))}
+    | s = Ident "(" l = separated_list(",",expr) ")" { SExpr(ECall(s,l,line $startpos),line $startpos)}
     | l = lvalue "=" e0 = expr { match l with
-            | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,e0) 
-            | EVar(s) -> SVarAssign(s, e0)
+            | EArrayAccess(s1,e,sopt,_) -> SArrayAssign(s1,e,sopt,e0,line $startpos) 
+            | EVar(s,_) -> SVarAssign(s, e0, line $startpos)
             | _ -> failwith "lvalue returned something extra wierd"
           } 
 
     | l = lvalue "++" { match l with
-            | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,
-                EBinOp(BopAdd, EArrayAccess(s1,e,sopt), EInt(1))) 
-            | EVar(s) -> SVarAssign(s, EBinOp(BopAdd,EVar(s),EInt(1)))
+            | EArrayAccess(s1,e,sopt,_) -> SArrayAssign(s1,e,sopt,
+                EBinOp(BopAdd, EArrayAccess(s1,e,sopt,line $startpos), EInt(1,line $startpos),line $startpos),line $startpos) 
+            | EVar(s,_) -> SVarAssign(s, EBinOp(BopAdd,EVar(s,line $startpos),EInt(1,line $startpos),line $startpos),line $startpos)
             | _ -> failwith "lvalue returned something extra wierd"
 
           } 
 
     | l = lvalue "--" 
         { match l with
-            | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,
-                EBinOp(BopSub, EArrayAccess(s1,e,sopt), EInt(1))) 
-            | EVar(s) -> SVarAssign(s, EBinOp(BopSub,EVar(s),EInt(1)))
+            | EArrayAccess(s1,e,sopt,_) -> SArrayAssign(s1,e,sopt,
+                EBinOp(BopSub, EArrayAccess(s1,e,sopt,line $startpos), EInt(1,line $startpos),line $startpos),line $startpos) 
+            | EVar(s,_) -> SVarAssign(s, EBinOp(BopSub,EVar(s,line $startpos),EInt(1,line $startpos),line $startpos),line $startpos)
             | _ -> failwith "lvalue returned something extra wierd"
           }
 
 lvalue:
-    | s = Ident { EVar(s) }
-    | s1 = Ident "[" e = expr "]" s2 = option(preceded(".", Ident))  { EArrayAccess(s1,e,s2)}
+    | s = Ident { EVar(s,line $startpos) }
+    | s1 = Ident "[" e = expr "]" s2 = option(preceded(".", Ident))  { EArrayAccess(s1,e,s2,line $startpos)}
 
 expr: 
-    | s = Ident { EVar(s) }
-    | n = IntConst { EInt(n) }
-    | c = CharConst { EChar(c) }
-    | s = StringConst { EString(s) }
-    | e1 = expr "+" e2 = expr { EBinOp(BopAdd, e1, e2) }
-    | e1 = expr "-" e2 = expr { EBinOp(BopSub, e1, e2) }
-    | e1 = expr "*" e2 = expr { EBinOp(BopMult, e1, e2) }
-    | e1 = expr "/" e2 = expr { EBinOp(BopDiv, e1, e2) }
-    | e1 = expr "%" e2 = expr { EBinOp(BopModulo, e1, e2) }
-    | e1 = expr ">" e2 = expr { EBinOp(BopGreater, e1, e2) }
-    | e1 = expr "<" e2 = expr { EBinOp(BopLesser, e1, e2) }
-    | e1 = expr ">=" e2 = expr { EBinOp(BopGreaterEq, e1, e2) }
-    | e1 = expr "<=" e2 = expr { EBinOp(BopLesserEq, e1, e2) }
-    | e1 = expr "==" e2 = expr { EBinOp(BopEqual, e1, e2) }
-    | e1 = expr "!=" e2 = expr { EBinOp(BopNotEq, e1, e2) }
-    | e1 = expr "&" e2 = expr { EBinOp(BopBitAnd, e1, e2) }
-    | e1 = expr "|" e2 = expr { EBinOp(BopBitOr, e1, e2) }
-    | e1 = expr "&&" e2 = expr { EBinOp(BopAnd, e1, e2) }
-    | e1 = expr "||" e2 = expr { EBinOp(BopOr, e1, e2) }
-    | e1 = expr "<<" e2 = expr { EBinOp(BopShiftLeft, e1, e2) }
-    | e1 = expr ">>" e2 = expr { EBinOp(BopShiftRight, e1, e2) }
-    | "!" e = expr { EUnOp(UnOpNegation, e)}
-    | "~" e = expr { EUnOp(UnOpBitFlip, e)}
-    | "-" e = expr %prec UMINUS { EUnOp(UnOpMinus, e)}
-    | s = Ident "(" l = separated_list(",",expr) ")" { ECall(s,l) } 
-    | New t = ty "[" e = expr "]" { ENew(t, e) }
-    | s = Ident "[" e = expr "]" sopt = option(preceded(".", Ident))  { EArrayAccess(s,e,sopt)}
+    | s = Ident { EVar(s,line $startpos) }
+    | n = IntConst { EInt(n,line $startpos) }
+    | c = CharConst { EChar(c,line $startpos) }
+    | s = StringConst { EString(s,line $startpos) }
+    | e1 = expr "+" e2 = expr { EBinOp(BopAdd, e1, e2,line $startpos) }
+    | e1 = expr "-" e2 = expr { EBinOp(BopSub, e1, e2,line $startpos) }
+    | e1 = expr "*" e2 = expr { EBinOp(BopMult, e1, e2,line $startpos) }
+    | e1 = expr "/" e2 = expr { EBinOp(BopDiv, e1, e2,line $startpos) }
+    | e1 = expr "%" e2 = expr { EBinOp(BopModulo, e1, e2,line $startpos) }
+    | e1 = expr ">" e2 = expr { EBinOp(BopGreater, e1, e2,line $startpos) }
+    | e1 = expr "<" e2 = expr { EBinOp(BopLesser, e1, e2,line $startpos) }
+    | e1 = expr ">=" e2 = expr { EBinOp(BopGreaterEq, e1, e2,line $startpos) }
+    | e1 = expr "<=" e2 = expr { EBinOp(BopLesserEq, e1, e2,line $startpos) }
+    | e1 = expr "==" e2 = expr { EBinOp(BopEqual, e1, e2,line $startpos) }
+    | e1 = expr "!=" e2 = expr { EBinOp(BopNotEq, e1, e2,line $startpos) }
+    | e1 = expr "&" e2 = expr { EBinOp(BopBitAnd, e1, e2,line $startpos) }
+    | e1 = expr "|" e2 = expr { EBinOp(BopBitOr, e1, e2,line $startpos) }
+    | e1 = expr "&&" e2 = expr { EBinOp(BopAnd, e1, e2,line $startpos) }
+    | e1 = expr "||" e2 = expr { EBinOp(BopOr, e1, e2,line $startpos) }
+    | e1 = expr "<<" e2 = expr { EBinOp(BopShiftLeft, e1, e2,line $startpos) }
+    | e1 = expr ">>" e2 = expr { EBinOp(BopShiftRight, e1, e2,line $startpos) }
+    | "!" e = expr { EUnOp(UnOpNegation, e,line $startpos)}
+    | "~" e = expr { EUnOp(UnOpBitFlip, e,line $startpos)}
+    | "-" e = expr %prec UMINUS { EUnOp(UnOpMinus, e,line $startpos)}
+    | s = Ident "(" l = separated_list(",",expr) ")" { ECall(s,l,line $startpos) } 
+    | New t = ty "[" e = expr "]" { ENew(t, e,line $startpos) }
+    | s = Ident "[" e = expr "]" sopt = option(preceded(".", Ident))  { EArrayAccess(s,e,sopt,line $startpos)}
     | "(" e = expr ")" { e } (*ask abt this*)
 
 ty:
