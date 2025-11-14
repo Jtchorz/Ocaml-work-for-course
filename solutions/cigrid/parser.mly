@@ -130,14 +130,14 @@ assign:
     | l = lvalue "=" e0 = expr { match l with
             | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,e0) 
             | EVar(s) -> SVarAssign(s, e0)
-            | _ -> failwith "Internal parser invariant violation"
+            | _ -> failwith "lvalue returned something extra wierd"
           } 
 
     | l = lvalue "++" { match l with
             | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,
                 EBinOp(BopAdd, EArrayAccess(s1,e,sopt), EInt(1))) 
             | EVar(s) -> SVarAssign(s, EBinOp(BopAdd,EVar(s),EInt(1)))
-            | _ -> failwith "Internal parser invariant violation"
+            | _ -> failwith "lvalue returned something extra wierd"
 
           } 
 
@@ -146,7 +146,7 @@ assign:
             | EArrayAccess(s1,e,sopt) -> SArrayAssign(s1,e,sopt,
                 EBinOp(BopSub, EArrayAccess(s1,e,sopt), EInt(1))) 
             | EVar(s) -> SVarAssign(s, EBinOp(BopSub,EVar(s),EInt(1)))
-            | _ -> failwith "Internal parser invariant violation"
+            | _ -> failwith "lvalue returned something extra wierd"
           }
 
 lvalue:

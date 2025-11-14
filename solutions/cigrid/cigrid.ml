@@ -1,7 +1,7 @@
 open Printf
 open Ast 
 open Parser
-open Typecheck
+open Namecheck
 (*comment just to grade, XD*)
 
 let usage_msg = "cigrid [--pretty-print] <filename>"
@@ -93,7 +93,7 @@ let parse filename =
          exit 1
       | Parser.Error -> 
          if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
-         printf "Parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; 
+         printf "Unknown parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; 
          exit 1
       in res
 

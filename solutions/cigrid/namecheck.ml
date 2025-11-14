@@ -1,4 +1,4 @@
-(*open Printf
+open Printf
 open Ast 
 open Hashtbl
 exception DoubleDecl  of string
@@ -26,7 +26,7 @@ let type_check_program prog =
     | [] -> 0
   in work prog hash
 *)
-let rec type_check_expr hash e =
+let rec name_check_expr hash e =
   match e with
   | EVar(s) ->
     (match find_opt hash s with
@@ -50,7 +50,7 @@ let rec type_check_expr hash e =
     | Some(_) -> name_check_expr hash e; 
     | None ->  printf "undeclared array name%s \n" s; exit 2
     )
- let rec type_check_stmt hash st =
+ let rec name_check_stmt hash st =
   match st with 
   | SExpr(e) -> 
     name_check_expr hash e; 
@@ -104,45 +104,18 @@ let rec type_check_expr hash e =
     | Some(_) -> hash
     | None -> printf "undeclared variable %s \n" s; exit 2
 
-let type_prep_stmt listTySt st =
+let name_prep_stmt listTySt st =
     let hash = create (List.length listTySt) in
     List.iter (fun(x,y) -> add hash y x ) listTySt;
     ignore(name_check_stmt hash st); ()
 
-let type_check_global hdecl hdef g = 
-  match g with
-  | GFuncDef(t,s,listTySt,st) -> 
-    let sgnt = t::(List.map fst listTySt) in
-    (match find_opt hdecl s with 
-    | Some(sgntfound) ->( 
-      if sgnt = sgntfound then ()
-      else
-        printf "signature mismatch for definition of %s" s; exit 2
-        )
-    | None -> ()
-    ); (*check if signatures match*)
-      (*now check if not declared before*)
-    (match find_opt hdef s with
-    | Some(_) -> printf "Double declaration of %s\n" s; exit 2
-    | None -> add hdef s t::(List.map fst listTySt); type_check hdecl hdef stmt; Pair.make hdecl hdef
-    )
-  | GFuncDecl(t,s,listTySt) -> 
-    (match find_opt hdecl s with
-    | Some(_) -> printf "Double declaration of %s\n" s; exit 2
-    | None -> add hdecl s t::(List.map fst listTySt); Pair.make hdecl hdef
-    )
+let name_check_global  = function
+  | GFuncDef(t,s,listTySt,st) -> name_prep_stmt listTySt st
+  | GFuncDecl(t,s,listTySt) -> ()
   | GVarDef(t,s,e) -> ()
   | GVarDecl(t, s) -> ()
   | Gstruct(s, listTySt) -> ()
 
-let type_check_program prog =
-  let hdf = create (List.length prog) in
-  let hdc = create (List.length prog) in
-  let rec work pr hdecl hdef = 
-    match pr with
-    | g::rest_pr -> 
-      let hpair = type_check_global hdecl hdef g in 
-      work rest_pr (fst hpair) (snd hpair)
-    | [] -> 0
-  in work prog hdc hdf
-  *)
+let name_check_program = function
+  | Prog(globalList) -> List.iter (name_check_global) globalList
+  
