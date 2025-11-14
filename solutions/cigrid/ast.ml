@@ -68,7 +68,8 @@ let pprint_binop = function
   | BopShiftLeft -> "<<"
   | BopShiftRight -> ">>"
 
-let rec pprint_ty = function
+
+  let rec pprint_ty = function
   | TVoid -> "TVoid"
   | TInt -> "TInt"
   | TChar -> "TChar"
