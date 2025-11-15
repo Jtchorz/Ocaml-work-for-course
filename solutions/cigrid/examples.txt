@@ -171,7 +171,7 @@ GFuncDef(TVoid, "struct_arrays", {},
   SScope({
     SVarDef(TPoint(TIdent("S2")), "a1", ENew(TIdent("S2"), EInt(5)))
     SArrayAssign("a1", EInt(2), "x", EInt(3))
-    SArrayAssign("a1", EInt(2), "x", EBinOp(+, EArrayAccess("a1", EInt(2), "x"), EInt(1)))
+    SArrayAssign("a1", EInt(2), "x", EBinOp(+, wyAccess("a1", EInt(2), "x"), EInt(1)))
     SArrayAssign("a1", EInt(2), "x", EBinOp(-, EArrayAccess("a1", EInt(2), "x"), EInt(1)))
     SVarDef(TInt, "y", EBinOp(+, EArrayAccess("a1", EInt(2), "y"), EInt(1)))
     SDelete("a1")

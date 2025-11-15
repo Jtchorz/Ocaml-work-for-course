@@ -128,7 +128,7 @@ int while_break(int x){
   }
   return x;
 }
-
+/*
 
 // postfix ++ and -- operations on identifiers (S)
 void pluspluss_minusminus(int x){
@@ -341,5 +341,5 @@ int main(){
   return 0;
 }
 
-
+*/
 
