@@ -1,15 +1,7 @@
 //ok, so let's try this bs
-struct Tree{
-  int val;
-  Tree * left;
-  Tree * right;  
-};
 
-Tree* leaf(int x){
-  Tree* t = new Tree[1];
-  t[0].val = x;
-  t[0].left = 0;
-}
+int x =0;
+string x = "";
 /*
 extern int putchar(int c);
 

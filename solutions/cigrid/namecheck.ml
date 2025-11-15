@@ -117,6 +117,6 @@ let name_check_global  = function
   | GVarDecl(t, s, ln) -> ()
   | Gstruct(s, listTySt, ln) -> ()
 
-let name_check_program ast = ()(*function
-  | Prog(globalList) -> List.iter (name_check_global) globalList*)
+let name_check_program = function
+  | Prog(globalList) -> List.iter (name_check_global) globalList
   
