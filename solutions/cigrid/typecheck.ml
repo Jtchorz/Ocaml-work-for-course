@@ -235,9 +235,13 @@ let rec type_check_stmt hash st =
     | None -> raise (UndeclaredVariable(s,ln))
 
 
-let type_prep_stmt listTySt st =
+let type_prep_stmt listTySt st ln=
     let hash = create (List.length listTySt) in
-    List.iter (fun(x,y) -> add hash y x ) listTySt;
+    List.iter (fun(x,y) -> 
+      if (mem hash y) then 
+        raise (DoubleDecl(y,ln )) 
+      else
+        add hash y x ) listTySt;
     ignore(type_check_stmt hash st); ()
 
 let type_check_global = function
@@ -257,7 +261,7 @@ let type_check_global = function
           raise (DoubleDecl(s,ln))
       | None -> 
         add def s (t::(List.map fst listTySt));  
-        type_prep_stmt listTySt st; 
+        type_prep_stmt listTySt st ln; 
         ()
       )
 

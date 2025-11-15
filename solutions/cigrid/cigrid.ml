@@ -127,26 +127,26 @@ let () =
    | Arg.Bad msg -> printf "%s\n" msg; exit 1
    | DoubleDecl (s, n) -> 
       printf "Error, double decl of %s\n" s;
-      eprintf "%d\n" n; 
+      eprintf "%d\n" n; exit 2
    | UndeclaredVariable (s,n) -> 
       printf "Error, undeclared variable %s\n" s; 
-      eprintf "%d\n" n;
+      eprintf "%d\n" n;exit 2
    | UndeclaredFunction (s,n) -> 
       printf "Error, undeclared function %s\n" s; 
-      eprintf "%d\n" n; 
+      eprintf "%d\n" n; exit 2
    | UndeclaredStruct (s,n) -> 
       printf "Error, undeclared struct %s\n" s; 
-      eprintf "%d\n" n;  
+      eprintf "%d\n" n;  exit 2
    | TypeMismatch (s,n) -> 
       printf "Error, type mismatch of %s\n" s; 
-      eprintf "%d\n" n;
+      eprintf "%d\n" n;exit 2
    | IndexTypeMismatch (s,n) -> 
       printf "Error, Index is not int %s\n" s; 
-      eprintf "%d\n" n;
+      eprintf "%d\n" n;exit 2
    | ConditionMismatch (n) ->
       printf "Error, Condition is type void \n"; 
-      eprintf "%d\n" n;
+      eprintf "%d\n" n; exit 2
    | IllegalPointerOperation (n) ->
       printf "Error, Illegal pointer operation \n"; 
-      eprintf "%d\n" n;
-   exit 2
+      eprintf "%d\n" n; exit 2
+   

@@ -1,7 +1,7 @@
 //ok, so let's try this bs
 
-int x =0;
-string x = "";
+void foo(int a, int b, int c, int a) {}
+
 /*
 extern int putchar(int c);
 
