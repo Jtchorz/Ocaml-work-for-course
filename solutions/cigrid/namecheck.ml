@@ -1,6 +1,6 @@
 open Printf
 open Ast 
-open Hashtbl(*
+open Hashtbl
 exception DoubleDecl  of string
 exception UndeclaredVariable  of string
 
@@ -28,60 +28,55 @@ let type_check_program prog =
 *)
 let rec name_check_expr hash e =
   match e with
-  | EVar(s) ->
+  | EVar(s, ln) ->
     (match find_opt hash s with
     | Some(_) -> ()
     | None -> printf "undeclared variable %s \n" s; exit 2
     )
-  | EInt(n) -> ()
-  | EChar(c) -> ()
-  | EString(s) -> ()
-  | EBinOp(bop, e1, e2) -> name_check_expr hash e1; name_check_expr hash  e2
-  | EUnOp(uop, e) -> name_check_expr hash e
-  | ECall(s, l) -> 
+  | EInt(n, ln) -> ()
+  | EChar(c, ln) -> ()
+  | EString(s, ln) -> ()
+  | EBinOp(bop, e1, e2, ln) -> name_check_expr hash e1; name_check_expr hash  e2
+  | EUnOp(uop, e, ln) -> name_check_expr hash e
+  | ECall(s, l, ln) -> 
     let rec work l =
       match l with
       | e::restl -> name_check_expr hash e; work restl 
       | [] -> ()
     in work l
-  | ENew(t, e) -> name_check_expr hash e
-  | EArrayAccess(s, e, sopt) -> 
+  | ENew(t, e, ln) -> name_check_expr hash e
+  | EArrayAccess(s, e, sopt, ln) -> 
     (match find_opt hash s with 
     | Some(_) -> name_check_expr hash e; 
     | None ->  printf "undeclared array name%s \n" s; exit 2
     )
- let rec type_check_stmt hash st =
+
+ let rec name_check_stmt hash st =
   match st with 
-  | SExpr(e) -> 
-    Pair.make (hash, type_check_expr hash e)
-    
-  | SVarDef(t, s, e) ->
-    let exprTy = type_check_expr hash e in
+  | SExpr(e, ln) -> 
+    name_check_expr hash e; 
+    hash
+  | SVarDef(t, s, e, ln) ->
+    name_check_expr hash e;
     (match find_opt hash s with
     | Some(_) -> printf "Double declaration of a variable %s \n" s; exit 2
-    | None ->  
-      if t = exprTy then(
-        add hash s t; 
-        hash
-      )
-      else
-        printf "type mismatch"
+    | None ->  add hash s t; hash 
     )
 
-  | SVarAssign(s,e) -> 
-    type_check_expr hash e; 
+  | SVarAssign(s,e, ln) -> 
+    name_check_expr hash e; 
     (match find_opt hash s with
     | Some(_) -> hash
     | None -> printf "undeclared variable %s \n" s; exit 2
     )
-  | SArrayAssign(s,e1,sopt,e2) -> 
+  | SArrayAssign(s,e1,sopt,e2, ln) -> 
     name_check_expr hash e1;
     name_check_expr hash e2;
     (match find_opt hash s with
     | Some(_) -> hash
     | None -> printf "undeclared variable %s \n" s; exit 2
     )
-  | SScope(l) -> 
+  | SScope(l, ln) -> 
     let newhash = copy hash in 
     let rec work listSt nh  =
     match listSt with
@@ -89,23 +84,23 @@ let rec name_check_expr hash e =
       | [] -> ()
     in work l newhash;
     hash (*return the original has when a scope is ended*)
-  | SIf(e,st,opst) -> 
+  | SIf(e,st,opst, ln) -> 
     name_check_expr hash e;
     (match opst with
     | Some(st2) -> name_check_stmt (name_check_stmt hash st2)  st (*the else should return the same hash unmodified*)
     | None -> name_check_stmt hash st
     )
-  | SWhile(e, st) -> 
+  | SWhile(e, st, ln) -> 
     name_check_expr hash e;
     name_check_stmt hash st
 
-  | SBreak -> hash
-  | SReturn(eop) -> 
+  | SBreak(ln) -> hash
+  | SReturn(eop, ln) -> 
     (match eop with
     | Some(e) -> name_check_expr hash e; hash
     | None -> hash
     )
-  | SDelete(s) -> 
+  | SDelete(s, ln) -> 
     match find_opt hash s with
     | Some(_) -> hash
     | None -> printf "undeclared variable %s \n" s; exit 2
@@ -116,12 +111,12 @@ let name_prep_stmt listTySt st =
     ignore(name_check_stmt hash st); ()
 
 let name_check_global  = function
-  | GFuncDef(t,s,listTySt,st) -> name_prep_stmt listTySt st
-  | GFuncDecl(t,s,listTySt) -> ()
-  | GVarDef(t,s,e) -> ()
-  | GVarDecl(t, s) -> ()
-  | Gstruct(s, listTySt) -> ()
-*)
+  | GFuncDef(t,s,listTySt,st, ln) -> name_prep_stmt listTySt st
+  | GFuncDecl(t,s,listTySt, ln) -> ()
+  | GVarDef(t,s,e, ln) -> ()
+  | GVarDecl(t, s, ln) -> ()
+  | Gstruct(s, listTySt, ln) -> ()
+
 let name_check_program ast = ()(*function
   | Prog(globalList) -> List.iter (name_check_global) globalList*)
   
