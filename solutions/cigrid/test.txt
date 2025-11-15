@@ -1,7 +1,5 @@
 //ok, so let's try this bs
-
-void foo(int a, int b, int c, int a) {}
-
+void foo(ty *s) { }
 /*
 extern int putchar(int c);
 

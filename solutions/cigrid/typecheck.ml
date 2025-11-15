@@ -244,8 +244,21 @@ let type_prep_stmt listTySt st ln=
         add hash y x ) listTySt;
     ignore(type_check_stmt hash st); ()
 
+let rec check_field = function
+    | TVoid | TInt | TChar -> true
+    | TPoint(t) -> check_field t
+    | TIdent(t) -> 
+      match find_opt structs t with 
+      | Some(_) -> true
+      | None -> false
+
+let check_fields listTy ln s =
+    if List.for_all check_field listTy then ()
+    else
+      raise (TypeMismatch(s,ln))
 let type_check_global = function
   | GFuncDef(t,s,listTySt,st, ln) -> 
+      check_fields (List.map fst listTySt) ln s;
       let sgnt = t::(List.map fst listTySt) in
       (match find_opt decl s with 
       | Some(sgntfound) ->( 
@@ -266,7 +279,8 @@ let type_check_global = function
       )
 
   | GFuncDecl(t,s,listTySt, ln) -> 
-    (match find_opt decl s with
+    ( check_fields (List.map fst listTySt) ln s;
+      match find_opt decl s with
     | Some(_) -> 
         raise (DoubleDecl(s,ln))
     | None -> add decl s (t::(List.map fst listTySt)); 
@@ -305,8 +319,16 @@ let type_check_global = function
     | Some(_) -> 
       raise (DoubleDecl(s,ln))
     | None -> 
-      add structs s listTySt;
-      ()
+      match find_opt decl s with
+      | Some(_) -> 
+        raise (DoubleDecl(s,ln))
+      | None -> 
+        match find_opt def s with
+        | Some(_) -> 
+          raise (DoubleDecl(s,ln))
+        | None -> 
+          add structs s listTySt;
+          ()
     )
 
 let type_check_program = function
