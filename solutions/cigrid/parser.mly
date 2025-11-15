@@ -183,7 +183,7 @@ expr:
     | s = Ident "(" l = separated_list(",",expr) ")" { ECall(s,l,line $startpos) } 
     | New t = ty "[" e = expr "]" { ENew(t, e,line $startpos) }
     | s = Ident "[" e = expr "]" sopt = option(preceded(".", Ident))  { EArrayAccess(s,e,sopt,line $startpos)}
-    | "(" e = expr ")" { e } (*ask abt this*)
+    | "(" e = expr ")" { e } 
 
 ty:
     | Void { TVoid }
@@ -191,28 +191,3 @@ ty:
     | Char { TChar }
     | s = Ident { TIdent(s)}
     | t = ty "*" { TPoint(t) }
-
-(*binop: 
-    | "+" { BopAdd }
-    | "-" { BopSub }
-    | "*" { BopMult }
-    | "/" { BopDiv }
-    | "%" { BopModulo }
-    | ">" { BopGreater }
-    | "<" { BopLesser }
-    | ">=" { BopGreaterEq }
-    | "<=" { BopLesserEq }
-    | "==" { BopEqual }
-    | "!=" { BopNotEq }
-    | "&" { BopBitAnd }
-    | "|" { BopBitOr }
-    | "&&" { BopAnd }
-    | "||" { BopOr }
-    | "<<" { BopShiftLeft }
-    | ">>" { BopShiftRight }
-
-
-unop:
-    | "!" { UnOpNegation }
-    | "~" { UnOpBitFlip }
-    | "-" %prec UMINUS { UnOpMinus }*)

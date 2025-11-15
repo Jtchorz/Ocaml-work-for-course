@@ -334,3 +334,30 @@ let type_check_global = function
 let type_check_program = function
   | Prog(globalList) -> List.iter (type_check_global) globalList
   
+let check_type ast =
+  (try type_check_program ast with
+  | DoubleDecl (s, n) -> 
+      printf "Error, double decl of %s\n" s;
+      eprintf "%d\n" n; exit 2
+  | UndeclaredVariable (s,n) -> 
+    printf "Error, undeclared variable %s\n" s; 
+    eprintf "%d\n" n;exit 2
+  | UndeclaredFunction (s,n) -> 
+    printf "Error, undeclared function %s\n" s; 
+    eprintf "%d\n" n; exit 2
+  | UndeclaredStruct (s,n) -> 
+    printf "Error, undeclared struct %s\n" s; 
+    eprintf "%d\n" n;  exit 2
+  | TypeMismatch (s,n) -> 
+    printf "Error, type mismatch of %s\n" s; 
+    eprintf "%d\n" n;exit 2
+  | IndexTypeMismatch (s,n) -> 
+    printf "Error, Index is not int %s\n" s; 
+    eprintf "%d\n" n;exit 2
+  | ConditionMismatch (n) ->
+    printf "Error, Condition is type void \n"; 
+    eprintf "%d\n" n; exit 2
+  | IllegalPointerOperation (n) ->
+    printf "Error, Illegal pointer operation \n"; 
+    eprintf "%d\n" n; exit 2
+  ); ()
