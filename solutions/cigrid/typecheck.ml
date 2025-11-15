@@ -21,8 +21,8 @@ let typeOf hash s ln =
       (match find_opt decl s with
       | Some(t::_) ->  t
       | Some([]) -> printf "variable without type"; exit 999
-      | None -> 
-        (match find_opt def s with
+      | None -> (
+        match find_opt def s with
         | Some(t::_) ->  t
         | Some([]) -> printf "variable without type"; exit 999
         | None -> 
@@ -30,10 +30,14 @@ let typeOf hash s ln =
           )
       )
 
-let structType structName sopt ln=
+let structType hash structName sopt ln =
+  let typeOfStruct = (match typeOf hash structName ln with
+  | TPoint(TIdent(s)) -> s 
+  | _ ->  raise (TypeMismatch(structName, ln)))
+  in
   match sopt with
   | Some(s2) -> 
-    (match find_opt structs structName with
+    (match find_opt structs typeOfStruct with
     | Some(pairList) -> 
       (match List.find_opt (fun (_,name) -> name = s2) pairList with
       | Some(ty, name) -> ty
@@ -45,15 +49,15 @@ let structType structName sopt ln=
   | None -> raise (TypeMismatch(structName, ln))
 
 
-let cmp t1 t2 =
-  match t1 with
-  | TChar | TInt -> (t2 = TChar)||(t2 = TInt)
-  | TVoid -> t2 = TVoid
-  | TIdent(s1) ->( match t2 with
-    | TIdent(s2) -> s1 = s2
-    | _ -> false
-  )
-  | TPoint(_) -> t1 = t2
+let rec cmp t1 t2 =
+  match t1, t2 with
+  | (TChar, TInt) | (TInt,TChar) | (TChar, TChar) -> true
+  | (TVoid, TVoid) -> true
+  | (TIdent(s1),TIdent(s2)) -> s1 = s2
+  | (TInt, TPoint(_)) | (TPoint(_), TInt) -> true
+  | (TPoint(ty1), TPoint(ty2)) -> cmp ty1 ty2
+  | (TInt, TInt) -> true
+  | (_, _) -> false
 
 
 let rec type_check_expr hash e =
@@ -113,23 +117,21 @@ let rec type_check_expr hash e =
         )
       | _ -> TPoint(ty))
     else raise (TypeMismatch("New", ln))
-    
+
 (*write it being able to access global vars*)
   | EArrayAccess(s, e, sopt, ln) -> 
-    let ty2 = type_check_expr hash e in 
-    if ty2 = TInt then(
-    (match typeOf hash s ln with 
-    | TPoint(TIdent(sName)) -> 
-        let ty = type_check_expr hash e in 
-        let ty2 = structType sName sopt ln in 
-        if cmp ty ty2 then ty 
-        else raise (TypeMismatch(s, ln))
-    | TPoint(ty) -> 
-        let ty2 = type_check_expr hash e in 
-        if cmp ty ty2 then ty 
-        else raise (TypeMismatch(s, ln))
-    | _ -> raise (TypeMismatch(s, ln))
+    let ty = type_check_expr hash e in 
+    if ty = TInt then(
+    (match sopt with 
+    | Some(_) -> structType hash s sopt ln
+    | None -> (
+      match typeOf hash s ln with 
+      | TPoint(ty) -> ty
+      | _ -> raise (TypeMismatch(s, ln))
+    )
     ))
+    else
+      raise (IndexTypeMismatch(s, ln))
 
 
 let rec type_check_stmt hash st = 
@@ -159,17 +161,27 @@ let rec type_check_stmt hash st =
       raise (TypeMismatch(s, ln))
 
   | SArrayAssign(s,e1,sopt,e2, ln) -> 
-    let exprTy = type_check_expr hash e2 in
+    let valTy = type_check_expr hash e2 in
     let indexTy = type_check_expr hash e1 in 
     if indexTy != TInt then
       raise (IndexTypeMismatch(s, ln))
     else (
+      match sopt with 
+      | Some(_) -> 
+        if cmp (structType hash s sopt ln) valTy then hash 
+        else raise (TypeMismatch(s, ln))
+      | None -> (
+        match typeOf hash s ln with 
+        | TPoint(ty) -> if (cmp ty valTy) then hash else raise (TypeMismatch(s, ln))
+        | _ -> raise (TypeMismatch(s, ln))
+      )
+    (*
       let arrTy = typeOf hash s ln in 
       match arrTy with 
       | TPoint(ty) -> 
         (match ty with
         | TIdent(s2) -> 
-          let structField = structType s2 sopt ln in 
+          let structField = structType hash s2 sopt ln in 
           if cmp structField exprTy then 
             hash 
           else 
@@ -183,7 +195,7 @@ let rec type_check_stmt hash st =
           raise (TypeMismatch(s, ln))
       | TVoid -> 
           raise (TypeMismatch(s, ln))
-    ) 
+    *)) 
 
   | SScope(l, _) -> 
     let newhash = copy hash in 

@@ -1,9 +1,14 @@
 //ok, so let's try this bs
-// Integer arrays (G)
-void int_arrays(int x, int* p){
-  int* a = new int[x];
-  int y = 1;
-  a[7] = a[19+y]; 
+struct Tree{
+  int val;
+  Tree * left;
+  Tree * right;  
+};
+
+Tree* leaf(int x){
+  Tree* t = new Tree[1];
+  t[0].val = x;
+  t[0].left = 0;
 }
 /*
 extern int putchar(int c);
