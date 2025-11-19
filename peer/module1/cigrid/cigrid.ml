@@ -3,7 +3,7 @@ open Ast
 
 exception InvalidFlagError 	of string
 exception InvalidFileError 	of string
-exception LexerError 	  	of string 
+exception LexerError 	  	of string 	
 exception ParserError		of string
 
 let rec find_flag str f_lst =
