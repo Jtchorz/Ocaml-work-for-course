@@ -67,7 +67,7 @@ type global =
 
 
 type program =
-	| Prog		of global list
+	| Prog of global list
 
 let pprint_bop = function
 	| BopADD -> "+"

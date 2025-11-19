@@ -1,0 +1,1 @@
+char* s = "lalala\z"

@@ -3,7 +3,7 @@ open Ast
 
 exception InvalidFlagError 	of string
 exception InvalidFileError 	of string
-exception LexerError 	  	of string
+exception LexerError 	  	of string 
 exception ParserError		of string
 
 let rec find_flag str f_lst =
@@ -18,7 +18,7 @@ let main f_lst file =
 		let lexbuf = Lexing.from_channel channel in
 		let res =
 			try
-				Parser.program Lexer.token lexbuf
+				Parser.program Lexer.token lexbuf 
 			with
 			(* If flag --line-error is enabled then raise error otherwise quietly exit. *)
 			(* We only print out "num\n" so ignore 'c' here *)
