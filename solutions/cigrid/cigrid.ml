@@ -2,6 +2,9 @@ open Printf
 open Ast 
 open Namecheck
 open Typecheck
+open IR
+open IRgen
+open AsmIr
 (*comment just to grade, XD*)
 
 let usage_msg = "cigrid [--pretty-print] <filename>"
@@ -10,15 +13,21 @@ let pretty_tok = ref false
 let name_analysis = ref false
 let precise_error = ref false
 let type_check = ref false
+let ir_print = ref false
 let input_file = ref ""
 let current = ref 0
+
+let testasmIr = Func("main",
+   [Block("main", ([BinOp(Add,Imm(1),Reg(1,Qword))],Ret))]
+)
       
 let speclist =
        [("--pretty-print", Arg.Set pretty_print, "Pretty print ast");
        ("--pretty-tok", Arg.Set pretty_tok, "Pretty print all tokens");
        ("--line-error", Arg.Set precise_error, "only print line number on errors");
       ("--name-analysis", Arg.Set name_analysis, "analyze variable names in fucntion definitions");
-      ("--type-check", Arg.Set type_check, "simple type analysis")]
+      ("--type-check", Arg.Set type_check, "simple type analysis");
+      ("--ir", Arg.Set ir_print, "pretty-print the ir representation")]
 let anon_fun f =
    input_file := f
 
@@ -36,6 +45,11 @@ let () =
    if !pretty_print then (printf "%s" (pprint_program ast));
    if !name_analysis then (name_check_program ast);
    if !type_check then (check_type ast);
+
+   let ir = convert_AST ast in
+
+   if !ir_print then ( printf "%s"  (pprint_ir_global ir));
+
    exit 0
    
    
