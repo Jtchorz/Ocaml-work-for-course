@@ -18,7 +18,7 @@ let input_file = ref ""
 let current = ref 0
 
 let testasmIr = Func("main",
-   [Block("main", ([BinOp(Add,Imm(1),Reg(1,Qword))],Ret))]
+   [Block("main", ([BinOp(Add,Imm(1),Reg(1,QWord))],Ret))]
 )
       
 let speclist =
@@ -49,6 +49,10 @@ let () =
    let ir = convert_AST ast in
 
    if !ir_print then ( printf "%s"  (pprint_ir_global ir));
+
+   let asm = (InstrSelection.ir_global_to_asm ir) in 
+   
+   printf "\tglobal main \n\tsection .text\n%s" (pprint_func asm);
 
    exit 0
    

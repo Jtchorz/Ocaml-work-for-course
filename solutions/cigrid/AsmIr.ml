@@ -81,40 +81,44 @@ let pprint_bitsize = function
   | QWord -> "qword" 
 
 let pprint_reg = function
-  | 0 -> "rax"
-  | 1 -> "rcx"
-  | 2 -> "rdx"
-  | 3 -> "rbx"
-  | 4 -> "rsp"
-  | 5 -> "rbp"
-  | 6 -> "rsi"
-  | 7 -> "rdi"
-  | 8 -> "r8"
-  | 9 -> "r9"
-  | 10 -> "r10"
-  | 11 -> "r11"
-  | 12 -> "r12"
-  | 13 -> "r13"
-  | 14 -> "r14"
-  | 15 -> "r15"
+  | (0,_) -> "rax"
+  | (1,_) -> "rcx"
+  | (2,_) -> "rdx"
+  | (3,_) -> "rbx"
+  | (4,_) -> "rsp"
+  | (5,_) -> "rbp"
+  | (6,_) -> "rsi"
+  | (7,_) -> "rdi"
+  | (8,_) -> "r8"
+  | (9,_) -> "r9"
+  | (10,_) -> "r10"
+  | (11,_) -> "r11"
+  | (12,_) -> "r12"
+  | (13,_) -> "r13"
+  | (14,_) -> "r14"
+  | (15,_) -> "r15"
   | _ -> Printf.printf "not a real register, wtf"; exit 4
 
 
 let pprint_op = function 
   | Imm(n) -> sprintf "%d" n
-  | Reg(n,_) -> pprint_reg n
-  | TReg((n,bits), s) -> s
-  | Mem(bit,r1,ropt,scale,disp) -> "akdsjhak"
+  | Reg(n,b) -> pprint_reg (n,b)
+  | TReg((n,bits), s) -> sprintf "%s_%d" s n
+  | Mem(bit,r1,ropt,scale,disp) ->(
+    match ropt with
+    | Some(r2) -> sprintf "[%s + %s * %d + %d]" (pprint_reg r1) (pprint_reg r2) scale disp
+    | None ->sprintf "[%s + %d]" (pprint_reg r1) disp
+  )
   | NoOp -> ""
 
 let pprint_instruction = function
-  | UnOp(uop, op1) -> "\t" ^ (pprint_uop uop) ^ "\t" ^ (pprint_op) ^ "\n"
-  | BinOp(bop, op1, op2) -> "\t" ^ (pprint_bop bop) ^ "\t" ^ (pprint_op) ^ ", " ^ (pprint_op) ^ "\n"
-  | Call(s)  -> Printf.printf "TODO"; exit 4
-  | Cqo ->  -> Printf.printf "TODO"; exit 4
+  | UnOp(uop, op1) -> "\t" ^ (pprint_uop uop) ^ "\t" ^ (pprint_op op1) ^ "\n"
+  | BinOp(bop, op1, op2) -> "\t" ^ (pprint_bop bop) ^ "\t" ^ (pprint_op op1) ^ ", " ^ (pprint_op op2) ^ "\n"
+  | Call(s)  -> "\tcall\t" ^ s ^"\n"
+  | Cqo -> "\tcqo\n"
 
 let pprint_instruction_list instList =
-  List.concat_map pprint_instruction instList 
+  String.concat "" (List.map pprint_instruction instList)
 
  let pprint_block = function 
   | Block(s,(instList, blEnd)) -> (pprint_instruction_list instList) ^ (pprint_block_end blEnd)
