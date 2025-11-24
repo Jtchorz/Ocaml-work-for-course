@@ -107,8 +107,8 @@ let pprint_op = function
   | Mem(bit,r1,ropt,scale,disp) ->(
     match ropt with
     | Some(r2) -> sprintf "[%s + %s * %d + %d]" (pprint_reg r1) (pprint_reg r2) scale disp
-    | None ->sprintf "[%s + %d]" (pprint_reg r1) disp
-  )
+    | None -> sprintf "qword [%s + %d]" (pprint_reg r1) disp
+  ) 
   | NoOp -> ""
 
 let pprint_instruction = function

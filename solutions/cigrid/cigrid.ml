@@ -15,6 +15,7 @@ let precise_error = ref false
 let type_check = ref false
 let ir_print = ref false
 let input_file = ref ""
+let asm_print = ref false
 let current = ref 0
 
 let testasmIr = Func("main",
@@ -27,7 +28,8 @@ let speclist =
        ("--line-error", Arg.Set precise_error, "only print line number on errors");
       ("--name-analysis", Arg.Set name_analysis, "analyze variable names in fucntion definitions");
       ("--type-check", Arg.Set type_check, "simple type analysis");
-      ("--ir", Arg.Set ir_print, "pretty-print the ir representation")]
+      ("--ir", Arg.Set ir_print, "pretty-print the ir representation");
+      ("--asm", Arg.Set asm_print, "pretty-print the assembly code");]
 let anon_fun f =
    input_file := f
 
@@ -52,7 +54,7 @@ let () =
 
    let asm = (InstrSelection.ir_global_to_asm ir) in 
    
-   printf "\tglobal main \n\tsection .text\n%s" (pprint_func asm);
+   if !asm_print then printf "\tglobal main \n\tsection .text\n%s" (pprint_func asm);
 
    exit 0
    

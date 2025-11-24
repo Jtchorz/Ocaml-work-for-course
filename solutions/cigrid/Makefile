@@ -6,3 +6,6 @@ all:
 clean:
 	$(RM) -rf _build
 	$(RM) -f cigrid
+	$(RM) -f *.o
+	$(RM) -f *.out
+	$(RM) -f *.asm
