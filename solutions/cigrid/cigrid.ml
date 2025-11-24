@@ -48,13 +48,20 @@ let () =
    if !name_analysis then (name_check_program ast);
    if !type_check then (check_type ast);
 
-   let ir = convert_AST ast in
+   let ir =(try convert_AST ast 
+   with 
+   | Failure(s) -> printf "%s" s; exit 0
+   )in
 
    if !ir_print then ( printf "%s"  (pprint_ir_global ir));
 
-   let asm = (InstrSelection.ir_global_to_asm ir) in 
-   
-   if !asm_print then printf "\tglobal main \n\tsection .text\n%s" (pprint_func asm);
+   let asm = (try
+   (InstrSelection.ir_global_to_asm ir)
+   with 
+   | Failure(s) -> printf "%s" s; exit 0
+   )in
+   if !asm_print then 
+      printf "\tglobal main \n\tsection .text\n%s" (pprint_func asm);
 
    exit 0
    

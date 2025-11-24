@@ -7,13 +7,13 @@ let rec st_to_irSt acc = function
   | SExpr(e,ln) ->  ((ISExpr(e,ln)::acc),ln)
   | SVarDef(t, s, e,ln) -> (([ISVarAssign(s,e,ln); ISVarDecl(s,t,ln)]@acc),ln)
   | SVarAssign(s,e,ln) -> ((ISVarAssign(s,e,ln)::acc),ln)
-  | SArrayAssign(s,e1,sopt,e2,_) -> printf "SArrayAssignTODO" ; exit 3
-  | SScope(l,ln) -> printf "no scope in scope yet" ; exit 3
-  | SIf(e,st,opst,_) -> printf "SIfTODO" ; exit 3
-  | SWhile(e, st,_) ->  printf "SWhileTOFO" ; exit 3
-  | SBreak(_) -> printf "SBreakTODO" ; exit 3
-  | SReturn(eop,ln) -> printf "really shouldn't be here, logic error" ; exit 999
-  | SDelete(s,_) -> printf "SDeleteTODO" ; exit 3
+  | SArrayAssign(s,e1,sopt,e2,_) -> failwith "SArrayAssignTODO" 
+  | SScope(l,ln) -> failwith "no scope in scope yet" 
+  | SIf(e,st,opst,_) -> failwith "SIfTODO" 
+  | SWhile(e, st,_) ->  failwith "SWhileTOFO" 
+  | SBreak(_) -> failwith "SBreakTODO" 
+  | SReturn(eop,ln) -> failwith "really shouldn't be here, logic error"
+  | SDelete(s,_) -> failwith "SDeleteTODO" 
 
 let create_block_list = function
     | SScope(stlist,lnTop) -> (
@@ -27,18 +27,18 @@ let create_block_list = function
     in let (acc,blockend) = work [] stlist 
     in [IBlock("main",((List.rev acc),blockend),lnTop)]
     ) 
-    | _ -> printf "FuncDef doesn't contain a scope\n"; exit 3
+    | _ -> failwith "FuncDef doesn't contain a scope\n"
 let convert_global = function
   | GFuncDef(t,s,listTySt,st,ln) -> IFunc("main",(t, listTySt, create_block_list st), ln)
-  | GFuncDecl(t,s,listTySt,_) -> printf "GFuncDeclTODO"; exit 3
-  | GVarDef(t,s,e,_) -> printf "GVarDefTODO"; exit 3
-  | GVarDecl(t, s,_) -> printf "GVarDeclTODO"; exit 3
-  | Gstruct(s, listTySt,_) -> printf "GStructTODO"; exit 3
+  | GFuncDecl(t,s,listTySt,_) -> failwith "GFuncDeclTODO"
+  | GVarDef(t,s,e,_) -> failwith "GVarDefTODO"
+  | GVarDecl(t, s,_) -> failwith "GVarDeclTODO"
+  | Gstruct(s, listTySt,_) -> failwith "GStructTODO"
 
 (*for now assume that only one function is there*)
 let convert_AST = function
   | Prog(globalList) -> (
     match globalList with
     | [glAst] -> convert_global glAst
-    | _ -> printf "Not allowed to do more than one function."; exit 3
+    | _ -> failwith "Not allowed to do more than one function."
   )

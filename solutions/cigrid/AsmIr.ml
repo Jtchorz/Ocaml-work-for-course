@@ -97,7 +97,7 @@ let pprint_reg = function
   | (13,_) -> "r13"
   | (14,_) -> "r14"
   | (15,_) -> "r15"
-  | _ -> Printf.printf "not a real register, wtf"; exit 4
+  | _ -> failwith "not a real register, wtf"
 
 
 let pprint_op = function 
@@ -125,7 +125,7 @@ let pprint_instruction_list instList =
 
 let pprint_block_list = function
   | [bl] -> pprint_block bl
-  | _ -> Printf.printf "shouldnt be more than one block"; exit 4
+  | _ -> failwith "shouldnt be more than one block"
 
 let pprint_func = function
   | Func(s, bList) -> "main:\n"^(pprint_block_list bList)
