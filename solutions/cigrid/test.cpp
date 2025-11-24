@@ -1,3 +1,3 @@
 void foo() {
-  return bar(1);
+  a = 47;
 }

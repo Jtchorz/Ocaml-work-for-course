@@ -64,7 +64,7 @@ let bop_spill bop acc op1 op2 =
       match op1 with 
       | TReg((n,b),_) -> (BinOp(bop, Mem(b,(4,QWord),None,0,(n*8)), op2))::acc
       | Reg(_) | Mem(_) -> (BinOp(bop, op1, op2))::acc
-      | Imm(_) | NoOp -> failwith "impossible"; exit 999
+      | Imm(_) | NoOp -> failwith "impossible"
       )
     | TReg((n,b),_) -> (
       match op1 with  
@@ -72,10 +72,10 @@ let bop_spill bop acc op1 op2 =
         (BinOp(bop, op1, Mem(b,(4,QWord),None,0,(n*8))))::acc
       | TReg((n1,b1),_) -> 
         (BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),Reg(10,QWord)))::(BinOp(Mov, Reg(10,QWord), Mem(b,(4,QWord),None,0,(n*8))))::acc
-      | Mem(_) -> failwith "TODOMem"; exit 999
-      | Imm(_) | NoOp -> failwith "impossible"; exit 999
+      | Mem(_) -> failwith "TODOMem"
+      | Imm(_) | NoOp -> failwith "impossible"
       )
-    | _ -> failwith "impossible"; exit 999
+    | _ -> failwith "impossible"
 
 let rec reg_alloc n acc = function
     | BinOp(bop, op1, op2)::restlist -> let acc2 = bop_spill bop acc op1 op2 in 
@@ -102,4 +102,6 @@ let ir_global_to_asm = function
 
 
 
-    
+    (*okay, this is trying to sometimes access variables that it shouldnt, just because it 
+    can slip through when you dont type check, that a variable is being used withou declaration
+    supress for now*)
