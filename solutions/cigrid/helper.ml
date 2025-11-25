@@ -75,7 +75,8 @@ let rec print_tokens filename =
 
 (*I am not using the ln from ast as it is not yet added to the node at which something failed*)
 let parse filename precise_error = 
-   let lexbuf = Lexing.from_channel (open_in filename) in 
+   let ch = open_in filename in
+   let lexbuf = Lexing.from_channel ch  in 
    let res = try Parser.main Lexer.token lexbuf with
    | Lexer.Error(c) -> 
       if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
@@ -89,4 +90,4 @@ let parse filename precise_error =
       if !precise_error then (eprintf "%d\n" lexbuf.lex_curr_p.pos_lnum);
       printf "Unknown parse error at line %d\n" lexbuf.lex_curr_p.pos_lnum; 
       exit 1
-   in res
+   in close_in ch; res

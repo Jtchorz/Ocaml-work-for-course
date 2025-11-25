@@ -30,8 +30,8 @@ let pprint_ir_blockend = function
     | Some(e) ->"ISReturn("^(pprint_expr e)^")\n"
     | None -> "ISReturn()\n"
   )
-  | ISBranch(e,s1,s2,_) -> "ISBranch TODO"
-  | ISJump(s,_) -> "ISJump TODO"
+  | ISBranch(e,s1,s2,_) -> "ISBranch("^(pprint_expr e)^",\n"^s1^", "^s2^")\n"
+  | ISJump(s,_) -> "ISJump("^s^")\n"
 
 let rec pprint_stmt_list = function
   | st::restlist -> (pprint_ir_stmt st)^(pprint_stmt_list restlist)
@@ -50,4 +50,4 @@ let rec pprint_block_list = function
   | [] -> ""
 
 let pprint_ir_global = function
-  | IFunc(s, (t, listTySt, blist),_) -> "IFunc("^(pprint_ty t)^", \""^s^"\", {"^(pprint_param_list listTySt)^"},\n"^(pprint_block_list blist)^")"
+  | IFunc(s, (t, listTySt, blist),_) -> "IFunc("^(pprint_ty t)^", \""^s^"\", {"^(pprint_param_list listTySt)^"},\n"^(pprint_block_list blist)^")\n"

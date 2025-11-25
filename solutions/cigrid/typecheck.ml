@@ -149,7 +149,10 @@ let rec type_check_expr hash e : ty =
 
 (*/////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////*)
-let rec type_check_stmt hash st = 
+let rec type_check_stmt origHash st = 
+  (*this is a big change because I thought ocaml was copying the hashes around, I have to change it*)
+  let hash = copy origHash in 
+  (*this makes only the caller to be able to modify its hash, as it will have to equate them*)
   match st with 
   | SExpr(e, _) -> (*this is juts a function call, doesnt need to check what is happening inside*)
     ignore(type_check_expr hash e); 
@@ -210,12 +213,14 @@ let rec type_check_stmt hash st =
   | SIf(conditionVal,ifBody,elseBodyOpt, ln) -> 
     (*just check if condition is well typed as it acn be pretty much any type inside*)
     ignore(type_check_expr hash conditionVal);
+    let ifHash = copy hash in
     (match elseBodyOpt with 
     | Some(elseBody) -> 
-      ignore(type_check_stmt hash elseBody); (*the else should return the same hash unmodified*)
-      type_check_stmt hash ifBody 
+      let elseHash = copy hash in
+      ignore(type_check_stmt ifHash ifBody); (*the else should return the same hash unmodified*)
+      type_check_stmt elseHash elseBody 
     | None -> 
-      type_check_stmt hash ifBody
+      type_check_stmt ifHash ifBody
     )
 (*///////////////////////////////////////////////////*)
   | SWhile(conditionVal, whileBody, ln) -> 

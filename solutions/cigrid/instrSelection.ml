@@ -2,6 +2,8 @@ open IR
 open Ast
 open Printf
 open AsmIr
+
+let rax = Reg(0,QWord)
 let bitsize_of_type = function
   | _ -> QWord
 
@@ -11,24 +13,29 @@ let find_reg name env =
 
   let tmp_reg n = TReg((n,QWord), "tmp")
 
+(*this is depending on the binary operation creating the necessarry
+assembler instructions as a list. assume first operand is in r1, 
+second in r2 and the result has to be stored in reg*)
+
+let binop_select reg r1 r2 = function
+  | BopAdd -> [(BinOp(Mov, reg, r1));BinOp(Add, reg, r2)]
+  | BopSub -> [(BinOp(Mov, reg, r1));BinOp(Sub, reg, r2)]
+  | BopMult -> [BinOp(Mov, rax, r1);
+    UnOp(IMul, r2); BinOp(Mov, reg, rax)]
+  | _ -> failwith "otherbinopTODO"
+
 let rec expr_to_asm env n acc reg = function
   | EVar(name, _) -> ((BinOp(Mov, reg, find_reg name env))::acc, n)
   | EInt(nu, _) -> ((BinOp(Mov, reg, Imm(nu)))::acc,n)
   | EChar(c,_) -> ((BinOp(Mov, reg, Imm(int_of_char c)))::acc,n)
   | EString(s, _) -> failwith "stringTODO"
-  | EBinOp(BopAdd,e1,e2,_) -> 
+  | EBinOp(bop,e1,e2,_) -> (
     let (r1, r2) = (tmp_reg n, tmp_reg(n+1)) in
     let n1 = n+2 in 
-    let acc1 = (BinOp(Mov, reg, r1))::(BinOp(Add, reg, r2))::acc in 
+    let acc1 = (binop_select reg r1 r2 bop)@acc in 
     let (acc2, n2) = expr_to_asm env n1 acc1 r2 e2 in 
-    expr_to_asm env n2 acc2 r1 e1  
-  | EBinOp(BopSub,e1,e2,_) -> 
-    let (r1, r2) = (tmp_reg n, tmp_reg(n+1)) in
-    let n1 = n+2 in 
-    let acc1 = (BinOp(Mov, reg, r1))::(BinOp(Sub, reg, r2))::acc in 
-    let (acc2, n2) = expr_to_asm env n1 acc1 r2 e2 in 
-    expr_to_asm env n2 acc2 r1 e1
-  | EBinOp(uop,e1,e2,_) -> failwith "otherbinopTODO"
+    expr_to_asm env n2 acc2 r1 e1 
+  )
   | EUnOp(UnOpMinus, exp,_) -> let acc1 = (UnOp(Neg, reg))::acc in
     expr_to_asm env n acc1 reg exp 
   | EUnOp(uop, exp,_) -> failwith "otherunopTODO"
@@ -53,11 +60,11 @@ let ir_blockend env n acc = function
       ((Ret), acc@eacc,n1)
     | None -> ((Ret), acc, n)
   )
-  | ISBranch(exp,n1,n2,_) -> failwith "ISExprTODO"
-  | ISJump(name,_) -> failwith "ISExprTODO"
+  | ISBranch(exp,n1,n2,_) -> failwith "IBrancTODO"
+  | ISJump(name,_) -> failwith "ISJumpTODO" 
 
 
-
+(*the memory access in this function has to be fixed, it is haphazard and incorrect propably*)
 let bop_spill bop acc op1 op2 =
     match op2 with
     | Imm(_) | Reg(_) -> ( 
@@ -75,11 +82,19 @@ let bop_spill bop acc op1 op2 =
       | Mem(_) -> failwith "TODOMem"
       | Imm(_) | NoOp -> failwith "impossible"
       )
-    | _ -> failwith "impossible"
+    | Mem(_) | NoOp -> failwith "impossible"
+
+    let uop_spill acc uop op =
+      match op with
+      | Imm(_) | Reg(_) -> (UnOp(uop, op))::acc
+      | TReg((n,b),_) -> (UnOp(uop, (Mem(b,(4,QWord),None,0,(n*8))) ))::acc
+      | Mem(_) | NoOp -> failwith "impossible"
 
 let rec reg_alloc n acc = function
     | BinOp(bop, op1, op2)::restlist -> let acc2 = bop_spill bop acc op1 op2 in 
-      reg_alloc n acc2 restlist
+      reg_alloc n acc2 restlist 
+    | UnOp(uop, op)::restlist -> let acc2 = uop_spill acc uop op in 
+      reg_alloc n acc2 restlist 
     | [] -> List.rev ((BinOp(Add, Reg(4,QWord),Imm(n*8)))::acc)
     | _ -> failwith "only doing bop for now"
 
@@ -91,7 +106,7 @@ let rec block_list_to_asm n acc = function    (*create the instructions*)
     let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in
     (*spill the registers here because it is convienient*)
     let acc3 = reg_alloc n2 [BinOp(Sub, Reg(4,QWord),Imm(n2*8))] acc2 in
-    (*return the whole assembled block*)
+    (*return the whole assembled block ACC/ACC3 here *)
     block_list_to_asm n2 ((Block("main",(acc3,blend)))::acc) restlist
   | [] -> List.rev acc 
 

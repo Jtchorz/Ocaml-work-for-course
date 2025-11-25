@@ -99,7 +99,7 @@ let rec pprint_stmt = function
       | Some(s) -> string_print s
       | None -> ""
       ) ^ ", " ^ (pprint_expr e2 ) ^ ")"
-  | SScope(l,_) ->  "SScope({" ^ (String.concat " " (List.map pprint_stmt l)) ^ "})"
+  | SScope(l,_) ->  "SScope({\n" ^ (String.concat "; \n" (List.map pprint_stmt l)) ^ "\n})\n"
   | SIf(e,st,opst,_) -> "SIf(" ^ (pprint_expr e) ^ ", " ^ (pprint_stmt st) ^ ", " ^ 
     (match opst with
       | Some(st1) -> pprint_stmt st1
