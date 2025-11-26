@@ -1,6 +1,6 @@
+extern int abs(int x);
+
 int main() {
-  int x = (3 + 4) % 5;
-  int y = (7 - 2) / 5;
-  int z = x * y;
-  return z;
+  int x = abs(0 - 3);
+  return x;
 }

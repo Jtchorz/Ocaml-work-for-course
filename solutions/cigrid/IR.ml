@@ -51,3 +51,15 @@ let rec pprint_block_list = function
 
 let pprint_ir_global = function
   | IFunc(s, (t, listTySt, blist),_) -> "IFunc("^(pprint_ty t)^", \""^s^"\", {"^(pprint_param_list listTySt)^"},\n"^(pprint_block_list blist)^")\n"
+
+
+
+let pprint_ir_global iList =
+    let rec work acc = function
+    | IFunc(s, (t, listTySt, blist),_)::restlist -> 
+      let nacc = 
+        acc^"IFunc("^(pprint_ty t)^", \""^s^"\", {"^(pprint_param_list listTySt)^"},\n"^(pprint_block_list blist)^")\n"
+      in 
+      work nacc restlist
+    | [] -> acc
+    in work "" iList

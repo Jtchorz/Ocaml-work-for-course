@@ -44,7 +44,7 @@ let binop_select reg r1 r2 = function
     Cqo;
     UnOp(IDiv, r2); BinOp(Mov, reg, rdx)]
 
-    
+
   | BopGreater -> [BinOp(Xor, r11, r11);
     BinOp(Sub, r1, r2);
     UnOp(Setg, r11b); 
@@ -201,10 +201,14 @@ let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*
 
     
 
-
-let ir_global_to_asm = function
-    | IFunc(s, (t, listTySt, blist),_) -> Func(s,(block_list_to_asm [] 0 [] blist))
-
+(*this actually matches funclist*)
+let ir_global_to_asm iList =
+    let rec work acc = function
+    | IFunc(s, (t, listTySt, blist),_)::restlist -> 
+      let nacc = Func(s,(block_list_to_asm [] 0 [] blist))::acc in 
+      work nacc restlist
+    | [] -> List.rev acc
+    in work [] iList
 
 
 

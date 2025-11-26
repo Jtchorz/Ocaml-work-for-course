@@ -81,6 +81,22 @@ let pprint_bitsize = function
   | QWord -> "qword" 
 
 let pprint_reg = function
+ (* | (0,DWord) -> "eax"
+  | (1,DWord) -> "ecx"
+  | (2,DWord) -> "edx"
+  | (3,DWord) -> "ebx"
+  | (4,DWord) -> "esp"
+  | (5,DWord) -> "ebp"
+  | (6,DWord) -> "esi"
+  | (7,DWord) -> "edi"
+  | (8,DWord) -> "r8d"
+  | (9,DWord) -> "r9d"
+  | (10,DWord) -> "r10d"
+  | (11,DWord) -> "r11d"
+  | (12,DWord) -> "r12d"
+  | (13,DWord) -> "r13d"
+  | (14,DWord) -> "r14d"
+  | (15,DWord) -> "r15d"*)
   | (0,_) -> "rax"
   | (1,_) -> "rcx"
   | (2,_) -> "rdx"
@@ -129,5 +145,9 @@ let rec pprint_block_list acc = function
    pprint_block_list nacc restlist
   | [] -> acc
 
-let pprint_func = function
-  | Func(s, bList) -> (pprint_block_list "" bList)
+let pprint_func funcList = 
+  let rec work acc = function
+  | Func(s, bList)::reslist -> 
+    acc^(pprint_block_list "" bList)
+  | [] -> acc
+  in work "" funcList 

@@ -49,11 +49,10 @@ let () =
    if !name_analysis then (name_check_program ast);
    if !type_check then (check_type ast);
 
-   let ir =(try convert_AST ast 
+   let (ir,beforeS) =(try convert_AST ast 
    with 
-   | Failure(s) -> (*printf "%s" s;*) exit 0
+   | Failure(s) -> printf "%s" s; exit 0
    )in
-
    if !ir_print then ( printf "%s"  (pprint_ir_global ir));
 
    let asm = (try
@@ -63,7 +62,7 @@ let () =
    | _ -> (*printf "idkwtf";*) exit 0
    )
    in
-   let asm_string = (sprintf "\tglobal main \n\tsection .text\n%s" (pprint_func asm)) in
+   let asm_string = (sprintf "%s\tglobal main \n\tsection .text\n%s" beforeS (pprint_func asm)) in
    if !asm_print then printf "%s" asm_string;
    if !compile then (
       let ch = open_out "a.asm" in 

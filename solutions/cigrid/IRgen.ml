@@ -3,6 +3,7 @@ open IR
 open Ast
 open Printf
 
+let buf = Buffer.create 16 
 let cnt = ref 0
 
 let rec create_block_list lastName name acc prevlist = function
@@ -66,8 +67,10 @@ longer straight line code will be handled inside of a scope
 
 let convert_global = function
   | GFuncDef(t,s,listTySt,st,ln) -> let blist = create_block_list None s [] [] [st] in
-    IFunc(s,(t, listTySt, List.rev blist), ln)
-  | GFuncDecl(t,s,listTySt,_) -> failwith "GFuncDeclTODO"
+    Some(IFunc(s,(t, listTySt, List.rev blist), ln))
+  | GFuncDecl(t,s,listTySt,_) -> 
+    Buffer.add_string buf ("extern\t"^s^"\n");
+    None
   | GVarDef(t,s,e,_) -> failwith "GVarDefTODO"
   | GVarDecl(t, s,_) -> failwith "GVarDeclTODO"
   | Gstruct(s, listTySt,_) -> failwith "GStructTODO"
@@ -75,8 +78,22 @@ let convert_global = function
 (*for now assume that only one function is there*)
 let convert_AST = function
   | Prog(globalList) -> (
-    match globalList with
-    | [glAst] -> convert_global glAst
-    | [] -> IFunc("",(TVoid, [], [IBlock("",([],ISReturn(None,0)),0)]), 0)
-    | _ -> failwith "Not allowed to do more than one function."
+    let rec work acc = function
+    | glAst::[] -> (
+      let nacc = match convert_global glAst with 
+      | Some(func) ->func::acc
+      | None -> acc
+      in
+      (List.rev nacc, Buffer.contents buf)
+    )
+    | glAst::restlist -> (
+      let nacc = match convert_global glAst with 
+      | Some(func) ->func::acc
+      | None -> acc
+      in
+      work nacc restlist
+    )
+
+    | [] -> ([IFunc("",(TVoid, [], [IBlock("",([],ISReturn(None,0)),0)]), 0)],"")
+    in work [] globalList
   )
