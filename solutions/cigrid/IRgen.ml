@@ -77,5 +77,6 @@ let convert_AST = function
   | Prog(globalList) -> (
     match globalList with
     | [glAst] -> convert_global glAst
+    | [] -> IFunc("",(TVoid, [], [IBlock("",([],ISReturn(None,0)),0)]), 0)
     | _ -> failwith "Not allowed to do more than one function."
   )
