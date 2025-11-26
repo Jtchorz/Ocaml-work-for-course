@@ -104,7 +104,7 @@ let rec expr_to_asm env n acc reg = function
     | [] -> 
       funcnum := 0; (acc,n)
     in let (nacc, n1) = (work [Call(name);BinOp(Mov,reg,rax)] n exprList) in 
-    ((List.rev nacc)@acc, n1)
+    (nacc@acc, n1)
 
   | ENew(t,exp,_) -> failwith "enewTODO"
   | EArrayAccess(name,elementNum,structfieldopt,_)-> failwith "earrayaccessTODO"
@@ -112,9 +112,11 @@ let rec expr_to_asm env n acc reg = function
 let rec irstmt_list_to_asm env n acc = function
   | ISVarDecl(name, t, _)::restlist -> let nenv = (name,(n,t))::env in
     irstmt_list_to_asm nenv (n+1) acc restlist 
+
   | ISVarAssign(name, exp, _)::restlist ->  
     let (eacc, n2) = expr_to_asm env n [] (find_reg name env) exp in
-    irstmt_list_to_asm env n2 (eacc@acc) restlist 
+    irstmt_list_to_asm env n2 (List.rev_append eacc acc) restlist 
+
   | ISExpr(e,_)::restlist -> 
     let (eacc, n2) = expr_to_asm env n [] rax e in 
     irstmt_list_to_asm env n2 (List.rev_append eacc acc) restlist
