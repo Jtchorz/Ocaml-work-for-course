@@ -51,7 +51,7 @@ let () =
 
    let ir =(try convert_AST ast 
    with 
-   | Failure(s) -> printf "%s" s; exit 0
+   | Failure(s) -> (*printf "%s" s;*) exit 0
    )in
 
    if !ir_print then ( printf "%s"  (pprint_ir_global ir));
@@ -59,8 +59,8 @@ let () =
    let asm = (try
    (InstrSelection.ir_global_to_asm ir)
    with 
-   | Failure(s) -> printf "%s" s; exit 0
-   | _ -> printf "idkwtf"; exit 0
+   | Failure(s) -> (*printf "%s" s;*) exit 0
+   | _ -> (*printf "idkwtf";*) exit 0
    )
    in
    let asm_string = (sprintf "\tglobal main \n\tsection .text\n%s" (pprint_func asm)) in
