@@ -1,0 +1,17 @@
+	extern	abs
+	global main 
+	section .text
+main:
+	sub	rsp, 32
+	mov	qword[rsp + 16], 0
+	mov	qword[rsp + 24], 3
+	mov	r10, qword[rsp + 16]
+	mov	qword[rsp + 8], r10
+	mov	r10, qword[rsp + 24]
+	sub	qword[rsp + 8], r10
+	mov	rdi, qword[rsp + 8]
+	call	abs
+	mov	qword[rsp + 0], rax
+	mov	rax, qword[rsp + 0]
+	add	rsp, 32
+	ret

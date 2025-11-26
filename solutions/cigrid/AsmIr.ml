@@ -123,15 +123,15 @@ let pprint_op = function
   | TReg((n,bits), s) -> sprintf "%s_%d" s n
   | Mem(bit,r1,ropt,scale,disp) ->(
     match ropt with
-    | Some(r2) -> sprintf "[%s + %s * %d + %d]" (pprint_reg r1) (pprint_reg r2) scale disp
-    | None -> sprintf "[%s + %d]" (pprint_reg r1) disp
+    | Some(r2) -> sprintf "%s[%s + %s * %d + %d]" (pprint_bitsize bit) (pprint_reg r1) (pprint_reg r2) scale disp
+    | None -> sprintf "%s[%s + %d]" (pprint_bitsize bit) (pprint_reg r1) disp
   ) 
   | NoOp -> ""
 
 let pprint_instruction = function
   | UnOp(uop, op1) -> "\t" ^ (pprint_uop uop) ^ "\t" ^ (pprint_op op1) ^ "\n"
   | BinOp(bop, op1, op2) -> "\t" ^ (pprint_bop bop) ^ "\t" ^ (pprint_op op1) ^ ", " ^ (pprint_op op2) ^ "\n"
-  | Call(s)  -> "\tcall\t" ^ s ^"\n"
+  | Call(s)  -> "\tcall\t$" ^ s ^"\n"
   | Cqo -> "\tcqo\n"
 
 let pprint_instruction_list instList =

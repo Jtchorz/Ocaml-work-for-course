@@ -1,6 +1,18 @@
-extern int abs(int x);
+extern int putchar(int c);
 
 int main() {
-  int x = abs(0 - 3);
-  return x;
+  putchar('H');
+  putchar('e');
+  putchar('l');
+  putchar('l');
+  putchar('o');
+  putchar(',');
+  putchar(' ');
+  putchar('W');
+  putchar('o');
+  putchar('r');
+  putchar('l');
+  putchar('d');
+  putchar('\n');
+  return 0;
 }

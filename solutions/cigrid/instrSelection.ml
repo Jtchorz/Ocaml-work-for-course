@@ -117,7 +117,9 @@ let rec irstmt_list_to_asm env n acc = function
   | ISVarAssign(name, exp, _)::restlist ->  
     let (eacc, n2) = expr_to_asm env n [] (find_reg name env) exp in
     irstmt_list_to_asm env n2 (List.rev_append eacc acc) restlist
-  | ISExpr(e,_)::restlist -> failwith "ISExprTODO"
+  | ISExpr(e,_)::restlist -> 
+    let (eacc, n2) = expr_to_asm env n [] rax e in 
+    irstmt_list_to_asm env n2 (List.rev_append eacc acc) restlist
   | [] -> (env, n, List.rev acc)
 
 (*takes enviorement, current counter and the previous instructions

@@ -58,17 +58,17 @@ let () =
    let asm = (try
    (InstrSelection.ir_global_to_asm ir)
    with 
-   | Failure(s) -> (*printf "%s" s;*) exit 0
+   | Failure(s) -> printf "%s" s; exit 0
    | _ -> (*printf "idkwtf";*) exit 0
    )
    in
-   let asm_string = (sprintf "\tglobal main \n%s \n\tsection .text\n%s" beforeS (pprint_func asm)) in
+   let asm_string = (sprintf "%s\tglobal main \nsection .text\n%s" beforeS (pprint_func asm)) in
    if !asm_print then printf "%s" asm_string;
    if !compile then (
       let ch = open_out "a.asm" in 
       output_string ch asm_string;
       close_out ch;
-      ignore(Sys.command "nasm -felf64 a.asm");
+      ignore(Sys.command "nasm -felf64 a.asm -o a.o");
       ignore(Sys.command "gcc -no-pie a.o");
       );
    exit 0
