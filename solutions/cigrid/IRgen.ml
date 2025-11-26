@@ -5,42 +5,11 @@ open Printf
 
 let cnt = ref 0
 
-(*make this handle oneliners too????*)
-let straight_code stlist =
-  let rec work acc = function
-  | st::restlist -> (
-    match st with 
-    | SExpr(e,ln) -> 
-      work (ISExpr(e,ln)::acc) restlist
-    | SVarDef(t, s, e,ln) -> 
-      work (ISVarAssign(s,e,ln)::ISVarDecl(s,t,ln)::acc) restlist 
-    | SVarAssign(s,e,ln) -> 
-      work (ISVarAssign(s,e,ln)::acc) restlist
-    | _ -> (acc, st::restlist)
-    ) 
-  | [] -> (acc, [])
-  in let (acc, restlist) = work [] stlist 
-  in (List.rev acc, restlist)
-
-  (*what is this function doing even????
-  it will take a list of statements and produce a block for it
-  it needs the name of the block, where the block should jump if done
-  an accumulator to add to the block and if needed the list of the
-  irstatements before it
-  it has to be able to match straight code 
-
-STRAIGHT CODE IN THIS FUNCTION CAN ONLY BE ONELINERS
-  if there is none lastName then we just throw in a ISreturn of nothing 
-  else jump to lastName 
-  if just a return then create a block with given prevlist(can be empty on purpose)
-    and given name and appropriate return
-  if a scope then 
-  *)
-
 let rec create_block_list lastName name acc prevlist = function
-  | SScope(stlist,ln)::restlist -> 
-    let (newIrList, inScopeRest) = straight_code stlist in
-    create_block_list lastName name acc newIrList inScopeRest
+  | SScope(stlist,ln)::[] -> 
+    create_block_list lastName name acc prevlist stlist
+  | SScope(stlist,ln)::_ ->
+    failwith "this is SSCope assert in IRgen"
 
   | SReturn(eop, ln)::restlist -> 
     IBlock(name, (prevlist, ISReturn(eop,ln)), ln)::acc
@@ -51,7 +20,7 @@ let rec create_block_list lastName name acc prevlist = function
       let (s1, s2, s3) = (sprintf "_if_true%d" !cnt, 
       sprintf "_if_false%d" ((!cnt)+1), 
       sprintf "_after_if%d" ((!cnt)+2) ) in
-      let nacc = (IBlock(name, (prevlist, ISBranch(eCond, s1, s2 , ln)), ln)::acc) in 
+      let nacc = (IBlock(name, (List.rev prevlist, ISBranch(eCond, s1, s2 , ln)), ln)::acc) in 
       incr cnt;incr cnt;incr cnt;
       let nacc2 = create_block_list (Some(s3)) s1 nacc [] [st] in
       let nacc3 = create_block_list (Some(s3)) s2 nacc2 [] [st2] in 
@@ -59,7 +28,7 @@ let rec create_block_list lastName name acc prevlist = function
 
     | None -> 
       let (s1, s2) = (sprintf "_if_true%d" !cnt, sprintf "_after_if%d" ((!cnt)+1) ) in
-      let nacc = (IBlock(name, (prevlist, ISBranch(eCond, s1, s2 , ln)), ln)::acc) in 
+      let nacc = (IBlock(name, (List.rev prevlist, ISBranch(eCond, s1, s2 , ln)), ln)::acc) in 
       incr cnt;incr cnt;
       let nacc2 = create_block_list (Some(s2)) s1 nacc [] [st] in 
       create_block_list None s2 nacc2 [] restlist
@@ -68,7 +37,7 @@ let rec create_block_list lastName name acc prevlist = function
     let (s1, s2, s3) = (sprintf "_while_body%d" !cnt, 
     sprintf "_after_while%d" ((!cnt)+1), 
     sprintf "_while_cond%d" ((!cnt)+2) ) in
-    let nacc = (IBlock(name, (prevlist, ISBranch(eCond, s1, s2 , ln)), ln)::acc) in 
+    let nacc = (IBlock(name, (List.rev prevlist, ISBranch(eCond, s1, s2 , ln)), ln)::acc) in 
     incr cnt;incr cnt;incr cnt; 
     let nacc2 = create_block_list (Some(s3)) s1 nacc [] [st] in
     let nacc3 = IBlock(s3,([],ISBranch(eCond,s1,s2,ln)),ln)::nacc2 in
@@ -77,37 +46,23 @@ let rec create_block_list lastName name acc prevlist = function
 (*this section handles one line statements which are not a scope.
 longer straight line code will be handled inside of a scope
 //////////////////////////////////////////////////////////////////////*)
-  | SExpr(e,ln)::[] -> (
-    match lastName with 
-    | Some(lname) -> IBlock(name,([ISExpr(e,ln)],ISJump(lname, ln)),ln)::acc
-    | None -> IBlock(name,([ISExpr(e,ln)],ISReturn(None,ln)),ln)::acc
-    ) 
-  | SExpr(_)::_ -> failwith "this is an assert for SExpr in IRgen.ml"
-
-  | SVarDef(t, s, e,ln)::[] -> (
-    match lastName with 
-    | Some(lname) -> IBlock(name,([ISVarAssign(s,e,ln);ISVarDecl(s,t,ln)],ISJump(lname, ln)),ln)::acc
-    | None -> IBlock(name,([ISVarAssign(s,e,ln);ISVarDecl(s,t,ln)],ISReturn(None,ln)),ln)::acc
-    ) 
-  | SVarDef(_)::_ -> failwith "this is an assert for SVarDef in IRgen.ml"
-(*the asserts here showed that after a block of while or whatever, we can have
-straight line code in not just one stmt, these makes the need to handle these cases differently
-maybe just create a block from the first one, and handle restnormally???*)
-  | SVarAssign(s,e,ln)::[] -> (
-    match lastName with 
-    | Some(lname) -> IBlock(name,([ISVarAssign(s,e,ln)],ISJump(lname, ln)),ln)::acc
-    | None -> IBlock(name,([ISVarAssign(s,e,ln)],ISReturn(None,ln)),ln)::acc
-    ) 
-  | SVarAssign(_)::stmtlist -> printf "aaa\n%saaa\n" (String.concat "; \n" (List.map pprint_stmt stmtlist));failwith "this is an assert for SVarAssign in IRgen.ml"
+  | SExpr(e,ln)::restlist -> 
+    create_block_list lastName name acc (ISExpr(e,ln)::prevlist) restlist
+  | SVarDef(t, s, e,ln)::restlist -> 
+    create_block_list lastName name acc (ISVarAssign(s,e,ln)::ISVarDecl(s,t,ln)::prevlist) restlist
+  | SVarAssign(s,e,ln)::restlist -> 
+   create_block_list lastName name acc (ISVarAssign(s,e,ln)::prevlist) restlist
 (*//////////////////////////////////////////////////////////////////////////////*)
   | [] -> (
     match lastName with 
-    | Some(s) -> IBlock(name, (prevlist, ISJump(s,-1)), -1)::acc
-    | None -> 
-      printf "wierd case, you didnt think this through";
-      IBlock(name, (prevlist, ISReturn(None, -1)), -1)::acc
+    | Some(s) ->
+      let nacc = IBlock(name,(List.rev prevlist, ISJump(s,-1)),-1)::acc in
+      nacc 
+    | None ->
+      let nacc = IBlock(name,(List.rev prevlist, ISReturn(None,-1)),-1)::acc in
+      nacc
   )
-  | _ -> failwith "nothing implemented yet"
+  | _ -> failwith "some things are not implemented yet"
 
 let convert_global = function
   | GFuncDef(t,s,listTySt,st,ln) -> let blist = create_block_list None s [] [] [st] in
