@@ -177,11 +177,11 @@ let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*
   | IBlock(s,(stlist,blockend),_)::[] -> 
     let (env, n1, acc1) = (irstmt_list_to_asm prevEnv n [] stlist) in 
     let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in 
-    let acc3 = (reg_alloc n2 [] acc2)@[(BinOp(Add, Reg(4,QWord),Imm(n*8)))] in 
-    let finalblocklist = List.rev ((Block(s,(acc3,blend)))::acc) in
+    let acc3 = List.rev ((BinOp(Add, Reg(4,QWord),Imm(n2*8))::(reg_alloc n2 [] acc2))) in 
+    let finalblocklist = List.rev ((Block(s,(acc3,blend)))::acc) in 
     ((*extractthe first block and its accumulator to add a sub to the beginning*)
       match finalblocklist with 
-      | Block(s,(ir,bend))::restlist ->
+      | Block(s,(ir,bend))::restlist -> 
         Block(s, (BinOp(Sub, Reg(4,QWord),Imm(n2*8))::ir,bend))::restlist
       | [] -> failwith "impossible match, ocaml broke"
     )  
