@@ -36,17 +36,17 @@ type block = Block of string * (inst list * blockend)
 type func = Func of string * block list
 
 let pprint_jbinop = function
-  | Jl -> "Jl"
-  | Jg -> "Jg"
-  | Jle -> "Jle"
-  | Jge -> "Jge"
-  | Je -> "Je"
-  | Jne-> "Jne"
-
+  | Jl -> "jl"
+  | Jg -> "jg"
+  | Jle -> "jle"
+  | Jge -> "jge"
+  | Je -> "je"
+  | Jne-> "jne"
 let pprint_block_end = function
   | Ret -> "\tret\n"
   | Jmp(s) -> "\tjmp\t" ^ s ^ "\n"
-  | JBinOp(jb, s1,s2) -> "\t" ^ (pprint_jbinop jb) ^ s1 ^ ", " ^ s2 ^ "\n"
+  | JBinOp(jb, s1,s2) -> "\t" ^ (pprint_jbinop jb) ^ "\t"^ s1 ^ 
+    "\n\tjmp\t"^ s2 ^ "\n"
 
 
 let pprint_uop = function 
@@ -121,11 +121,12 @@ let pprint_instruction_list instList =
   String.concat "" (List.map pprint_instruction instList)
 
  let pprint_block = function 
-  | Block(s,(instList, blEnd)) -> (pprint_instruction_list instList) ^ (pprint_block_end blEnd)
+  | Block(s,(instList, blEnd)) -> s^":\n" ^ (pprint_instruction_list instList) ^ (pprint_block_end blEnd)
 
-let pprint_block_list = function
-  | [bl] -> pprint_block bl
-  | _ -> failwith "shouldnt be more than one block"
+let rec pprint_block_list acc = function
+  | bl::restlist -> let nacc = acc^(pprint_block bl) in
+   pprint_block_list nacc restlist
+  | [] -> acc
 
 let pprint_func = function
-  | Func(s, bList) -> "main:\n"^(pprint_block_list bList)
+  | Func(s, bList) -> (pprint_block_list "" bList)

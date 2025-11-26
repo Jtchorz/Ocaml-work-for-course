@@ -4,6 +4,7 @@ open Printf
 open AsmIr
 
 let rax = Reg(0,QWord)
+let rdx = Reg(2, QWord)
 let bitsize_of_type = function
   | _ -> QWord
 
@@ -20,8 +21,27 @@ second in r2 and the result has to be stored in reg*)
 let binop_select reg r1 r2 = function
   | BopAdd -> [(BinOp(Mov, reg, r1));BinOp(Add, reg, r2)]
   | BopSub -> [(BinOp(Mov, reg, r1));BinOp(Sub, reg, r2)]
+
   | BopMult -> [BinOp(Mov, rax, r1);
     UnOp(IMul, r2); BinOp(Mov, reg, rax)]
+
+  | BopDiv -> [BinOp(Mov, rax, r1);
+    UnOp(IDiv, r2); BinOp(Mov, reg, rax)]
+
+  | BopModulo -> [BinOp(Mov, rax, r1);
+    UnOp(IDiv, r2); BinOp(Mov, reg, rdx)]
+  | BopGreater -> [BinOp(Sub, r1, r2);
+    UnOp(Setg, reg)]
+  | BopLesser -> [BinOp(Sub, r1, r2);
+    UnOp(Setl, reg)]
+  | BopGreaterEq -> [BinOp(Sub, r1, r2);
+    UnOp(Setge, reg)]
+  | BopLesserEq -> [BinOp(Sub, r1, r2);
+    UnOp(Setle, reg)]
+  | BopEqual -> [BinOp(Sub, r1, r2);
+    UnOp(Sete, reg)]
+  | BopNotEq -> [BinOp(Sub, r1, r2);
+    UnOp(Setne, reg)]
   | _ -> failwith "otherbinopTODO"
 
 let rec expr_to_asm env n acc reg = function
@@ -52,16 +72,21 @@ let rec irstmt_list_to_asm env n acc = function
   | ISExpr(e,_)::restlist -> failwith "ISExprTODO"
   | [] -> (env, n, List.rev acc)
 
-
+(*takes enviorement, current counter and the previous instructions
+Return a blockend, extra instructions if needed and the updated counter
+*)
 let ir_blockend env n acc = function
   | ISReturn(eop, _) ->(
     match eop with
-    | Some(e) -> let (eacc, n1) = expr_to_asm env n [] (Reg(0, QWord)) e in 
+    | Some(e) -> let (eacc, n1) = expr_to_asm env n [] rax e in 
       ((Ret), acc@eacc,n1)
     | None -> ((Ret), acc, n)
   )
-  | ISBranch(exp,n1,n2,_) -> failwith "IBrancTODO"
-  | ISJump(name,_) -> failwith "ISJumpTODO" 
+  | ISBranch(exp,s1,s2,_) -> 
+    let (eacc, n1) = expr_to_asm env n [] rax exp in 
+    let newop = BinOp(Cmp, rax, Imm(0))in
+    (JBinOp(Jne,s1,s2), acc@eacc@[newop], n1)
+  | ISJump(name,_) -> (Jmp(name), acc, n) 
 
 
 (*the memory access in this function has to be fixed, it is haphazard and incorrect propably*)
@@ -100,19 +125,21 @@ let rec reg_alloc n acc = function
 
 
 
-let rec block_list_to_asm n acc = function    (*create the instructions*)
-  | IBlock(s,(stlist,blockend),_)::restlist -> let (env, n1, acc1) = (irstmt_list_to_asm [] n [] stlist) in 
-    (*handle the blockend*)
-    let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in
-    (*spill the registers here because it is convienient*)
-    let acc3 = reg_alloc n2 [BinOp(Sub, Reg(4,QWord),Imm(n2*8))] acc2 in
+let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*)
+  | IBlock(s,(stlist,blockend),_)::restlist -> let (env, n1, acc1) = (irstmt_list_to_asm prevEnv n [] stlist) in 
+    (*handle the blockend*) 
+    let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in 
+    (*dont spill the registers here ig? idk where to do that so it returns anything useful*)
+    (*let acc3 = reg_alloc n2 [BinOp(Sub, Reg(4,QWord),Imm(n2*8))] acc2 in*)
     (*return the whole assembled block ACC/ACC3 here *)
-    block_list_to_asm n2 ((Block("main",(acc3,blend)))::acc) restlist
-  | [] -> List.rev acc 
+    block_list_to_asm env n2 ((Block(s,(acc2,blend)))::acc) restlist
+  | [] -> (*add smth here that push and pulls and spills, because we have easy
+  access to first and last block*)
+    List.rev acc 
 
 
 let ir_global_to_asm = function
-    | IFunc(s, (t, listTySt, blist),_) -> Func("main",(block_list_to_asm 0 [] blist))
+    | IFunc(s, (t, listTySt, blist),_) -> Func(s,(block_list_to_asm [] 0 [] blist))
 
 
 
