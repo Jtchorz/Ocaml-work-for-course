@@ -62,7 +62,7 @@ let () =
    | _ -> (*printf "idkwtf";*) exit 0
    )
    in
-   let asm_string = (sprintf "%s\tglobal main \n\tsection .text\n%s" beforeS (pprint_func asm)) in
+   let asm_string = (sprintf "\tglobal main \n%s \n\tsection .text\n%s" beforeS (pprint_func asm)) in
    if !asm_print then printf "%s" asm_string;
    if !compile then (
       let ch = open_out "a.asm" in 

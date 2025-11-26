@@ -69,7 +69,7 @@ let convert_global = function
   | GFuncDef(t,s,listTySt,st,ln) -> let blist = create_block_list None s [] [] [st] in
     Some(IFunc(s,(t, listTySt, List.rev blist), ln))
   | GFuncDecl(t,s,listTySt,_) -> 
-    Buffer.add_string buf ("extern\t"^s^"\n");
+    Buffer.add_string buf ("\textern\t"^s^"\n");
     None
   | GVarDef(t,s,e,_) -> failwith "GVarDefTODO"
   | GVarDecl(t, s,_) -> failwith "GVarDeclTODO"

@@ -81,7 +81,7 @@ let pprint_bitsize = function
   | QWord -> "qword" 
 
 let pprint_reg = function
- (* | (0,DWord) -> "eax"
+   | (0,DWord) -> "eax"
   | (1,DWord) -> "ecx"
   | (2,DWord) -> "edx"
   | (3,DWord) -> "ebx"
@@ -96,7 +96,7 @@ let pprint_reg = function
   | (12,DWord) -> "r12d"
   | (13,DWord) -> "r13d"
   | (14,DWord) -> "r14d"
-  | (15,DWord) -> "r15d"*)
+  | (15,DWord) -> "r15d"
   | (0,_) -> "rax"
   | (1,_) -> "rcx"
   | (2,_) -> "rdx"
@@ -124,7 +124,7 @@ let pprint_op = function
   | Mem(bit,r1,ropt,scale,disp) ->(
     match ropt with
     | Some(r2) -> sprintf "[%s + %s * %d + %d]" (pprint_reg r1) (pprint_reg r2) scale disp
-    | None -> sprintf "qword [%s + %d]" (pprint_reg r1) disp
+    | None -> sprintf "[%s + %d]" (pprint_reg r1) disp
   ) 
   | NoOp -> ""
 
