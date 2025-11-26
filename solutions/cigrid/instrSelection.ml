@@ -25,10 +25,8 @@ let func_register = function
   | 4 -> Reg(8, QWord)
   | 5 -> Reg(9,QWord)
   | _ -> failwith "function has too many arguments"
-(*this is depending on the binary operation creating the necessarry
-assembler instructions as a list. assume first operand is in r1, 
-second in r2 and the result has to be stored in reg*)
 
+(*this gets them in the right order to make them easy to write*)
 let binop_select reg r1 r2 = function
   | BopAdd -> [(BinOp(Mov, reg, r1));BinOp(Add, reg, r2)]
   | BopSub -> [(BinOp(Mov, reg, r1));BinOp(Sub, reg, r2)]
@@ -76,8 +74,7 @@ let binop_select reg r1 r2 = function
     BinOp(Mov, reg, r11)]
   | _ -> failwith "otherbinopTODO"
 
-  (*this function creates new asm expressions, and prepends them to acc
-  which makes them in reverse order*)
+(*this function has them in the wrong order for efficient adding*)
 let rec expr_to_asm env n acc reg = function
   | EVar(name, _) -> ((BinOp(Mov, reg, find_reg name env))::acc, n)
   | EInt(nu, _) -> ((BinOp(Mov, reg, Imm(nu)))::acc,n)
@@ -86,7 +83,7 @@ let rec expr_to_asm env n acc reg = function
   | EBinOp(bop,e1,e2,_) -> (
     let (r1, r2) = (tmp_reg n, tmp_reg(n+1)) in
     let n1 = n+2 in 
-    let acc1 = (binop_select reg r1 r2 bop)@acc in 
+    let acc1 = ((binop_select reg r1 r2 bop))@acc in 
     let (acc2, n2) = expr_to_asm env n1 acc1 r2 e2 in 
     expr_to_asm env n2 acc2 r1 e1 
   )
@@ -95,19 +92,20 @@ let rec expr_to_asm env n acc reg = function
     expr_to_asm env n acc1 reg exp 
   | EUnOp(uop, exp,_) -> failwith "otherunopTODO"
 
-  | ECall(name, exprList, ln) -> (
-    match exprList with
-    | e::restList -> 
+  | ECall(name, exprList, ln) -> 
+    let rec work acc n = function
+    | e::restlist -> 
       let (r1,r2) = (tmp_reg n,func_register !funcnum) in
       incr funcnum;
-      let n1 = n+1 in 
+      let n1 = n + 1 in
       let nacc = BinOp(Mov,r2,r1)::acc in 
       let (nacc2, n2) = expr_to_asm env n1 nacc r1 e in 
-      expr_to_asm env n2 nacc2 reg (ECall(name,restList,ln))
-    | [] -> funcnum := 0;
-      (acc@[Call(name);BinOp(Mov,reg,rax)], n)
-  )
-      
+      work nacc2 n2 restlist
+    | [] -> 
+      funcnum := 0; (acc,n)
+    in let (nacc, n1) = (work [Call(name);BinOp(Mov,reg,rax)] n exprList) in 
+    ((List.rev nacc)@acc, n1)
+
   | ENew(t,exp,_) -> failwith "enewTODO"
   | EArrayAccess(name,elementNum,structfieldopt,_)-> failwith "earrayaccessTODO"
 
@@ -116,7 +114,7 @@ let rec irstmt_list_to_asm env n acc = function
     irstmt_list_to_asm nenv (n+1) acc restlist 
   | ISVarAssign(name, exp, _)::restlist ->  
     let (eacc, n2) = expr_to_asm env n [] (find_reg name env) exp in
-    irstmt_list_to_asm env n2 (List.rev_append eacc acc) restlist
+    irstmt_list_to_asm env n2 (eacc@acc) restlist 
   | ISExpr(e,_)::restlist -> 
     let (eacc, n2) = expr_to_asm env n [] rax e in 
     irstmt_list_to_asm env n2 (List.rev_append eacc acc) restlist
@@ -124,13 +122,14 @@ let rec irstmt_list_to_asm env n acc = function
 
 (*takes enviorement, current counter and the previous instructions
 Return a blockend, extra instructions if needed and the updated counter
-*)
+jmps to a secret thing to prevent very bad behavior sometimes
+  *)
 let ir_blockend env n acc = function
   | ISReturn(eop, _) ->(
     match eop with
     | Some(e) -> let (eacc, n1) = expr_to_asm env n [] rax e in 
-      ((Ret), acc@eacc,n1)
-    | None -> ((Ret), acc, n)
+      ((Jmp("________")), acc@eacc,n1)
+    | None -> ((Jmp("________")), acc, n)
   )
   | ISBranch(exp,s1,s2,_) -> 
     let (eacc, n1) = expr_to_asm env n [] rax exp in 
@@ -177,14 +176,18 @@ let rec reg_alloc n acc = function
     (*| _ -> failwith "assert instrSelection reg_alloc"*)
 
 
-
+(*this implementation is extra faulty, it makes returns inside of everything
+not sub the stack correctly maybe in the irgen instead of
+returning, create a secret block at the end? one that you always jump to, and add it in here?
+*)
 let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*)
   | IBlock(s,(stlist,blockend),_)::[] -> 
     let (env, n1, acc1) = (irstmt_list_to_asm prevEnv n [] stlist) in 
     let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in 
-    let acc3 = List.rev ((BinOp(Add, Reg(4,QWord),Imm(n2*8))::(reg_alloc n2 [] acc2))) in 
-    let finalblocklist = List.rev ((Block(s,(acc3,blend)))::acc) in 
-    ((*extractthe first block and its accumulator to add a sub to the beginning*)
+    let acc3 = List.rev (reg_alloc n2 [] acc2) in 
+    let finalblocklist = 
+      List.rev (Block("________",([BinOp(Add, Reg(4,QWord),Imm(n2*8))], Ret))::(Block(s,(acc3,blend)))::acc) in 
+    ((*just add a special block of name "________" that will sub and ret, assume*)
       match finalblocklist with 
       | Block(s,(ir,bend))::restlist -> 
         Block(s, (BinOp(Sub, Reg(4,QWord),Imm(n2*8))::ir,bend))::restlist

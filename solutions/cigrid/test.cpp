@@ -1,18 +1,11 @@
+extern int islower(int c);
+extern int tolower(int c);
 extern int putchar(int c);
 
 int main() {
-  putchar('H');
-  putchar('e');
-  putchar('l');
-  putchar('l');
-  putchar('o');
-  putchar(',');
-  putchar(' ');
-  putchar('W');
-  putchar('o');
-  putchar('r');
-  putchar('l');
-  putchar('d');
-  putchar('\n');
-  return 0;
+  int c = 'A';
+  if (islower(c) == 0) {
+    c = tolower(c);
+  }
+  return c;
 }
