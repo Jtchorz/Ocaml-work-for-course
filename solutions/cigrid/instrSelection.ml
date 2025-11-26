@@ -37,9 +37,11 @@ let binop_select reg r1 r2 = function
     UnOp(IMul, r2); BinOp(Mov, reg, rax)]
 
   | BopDiv -> [BinOp(Mov, rax, r1);
+    Cqo;
     UnOp(IDiv, r2); BinOp(Mov, reg, rax)]
 
   | BopModulo -> [BinOp(Mov, rax, r1);
+    Cqo;
     UnOp(IDiv, r2); BinOp(Mov, reg, rdx)]
 
   | BopGreater -> [BinOp(Xor, r11, r11);
