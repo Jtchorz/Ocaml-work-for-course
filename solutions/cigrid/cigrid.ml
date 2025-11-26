@@ -58,7 +58,7 @@ let () =
    let asm = (try
    (InstrSelection.ir_global_to_asm ir)
    with 
-   | Failure(s) -> printf "%s" s; exit 0
+   | Failure(s) -> (*printf "%s" s; *)exit 0
    | _ -> (*printf "idkwtf";*) exit 0
    )
    in
