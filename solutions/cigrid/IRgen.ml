@@ -12,7 +12,7 @@ let rec create_block_list lastName name acc prevlist = function
     failwith "this is SSCope assert in IRgen"
 
   | SReturn(eop, ln)::restlist -> 
-    IBlock(name, (prevlist, ISReturn(eop,ln)), ln)::acc
+    IBlock(name, (List.rev prevlist, ISReturn(eop,ln)), ln)::acc
 
   | SIf(eCond, st,stopt,ln)::restlist ->(
     match stopt with 
