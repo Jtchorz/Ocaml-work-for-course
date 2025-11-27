@@ -1,12 +1,24 @@
 int main() {
-	int x = 0;
-	int i = 0;
-	{
-		i = 0;
-		while (i < 10) {
-			x = x + 2;
-			i++;
-		}
-	}
-	return x;
+    int n = 4;
+    int r = 1;
+    int a = 0;
+    int b = 15;
+
+    // First compute the factorial
+    while (n > 0) {
+        r = r * n;
+        n--;
+    }
+
+    // Then compute gcd(n!, 15) naively
+    a = r;
+    while (a != b) {
+        if (a > b) {
+            a = a - b;
+        } else {
+            b = b - a;
+        }
+    }
+
+    return a;
 }
