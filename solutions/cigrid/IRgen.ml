@@ -42,7 +42,7 @@ let rec create_block_list lastName name acc prevlist = function
     incr cnt;incr cnt;incr cnt; 
     let nacc2 = create_block_list (Some(s3)) s1 nacc [] [st] in
     let nacc3 = IBlock(s3,([],ISBranch(eCond,s1,s2,ln)),ln)::nacc2 in
-    create_block_list None s2 nacc3 [] restlist 
+    create_block_list lastName s2 nacc3 [] restlist 
   )
 (*this section handles one line statements which are not a scope.
 longer straight line code will be handled inside of a scope
