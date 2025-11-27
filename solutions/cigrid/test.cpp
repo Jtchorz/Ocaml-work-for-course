@@ -1,11 +1,12 @@
 int main() {
-    int x = 0;
-    int y = 0;
-    while (x < 10) {
-        while (y < 7) {
-            y++;
-        }
-        x = x + y;
-    }
-    return x + y;
+	int x = 0;
+	int i = 0;
+	{
+		i = 0;
+		while (i < 10) {
+			x = x + 2;
+			i++;
+		}
+	}
+	return x;
 }

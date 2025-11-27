@@ -8,9 +8,12 @@ let cnt = ref 0
 
 let rec create_block_list lastName name acc prevlist = function
   | SScope(stlist,ln)::[] -> 
-    create_block_list lastName name acc prevlist stlist
-  | SScope(stlist,ln)::_ ->
-    failwith "this is SSCope assert in IRgen"
+    create_block_list lastName name acc prevlist stlist  
+  | SScope(stlist,ln)::restlist ->
+    let s = sprintf "_scope%d" !cnt in 
+    incr cnt;
+    let nacc = create_block_list (Some(s)) name acc prevlist stlist in
+    create_block_list lastName s nacc [] restlist 
 
   | SReturn(eop, ln)::restlist -> 
     IBlock(name, (List.rev prevlist, ISReturn(eop,ln)), ln)::acc

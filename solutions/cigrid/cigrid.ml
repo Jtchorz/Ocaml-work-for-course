@@ -51,7 +51,7 @@ let () =
 
    let (ir,beforeS) =(try convert_AST ast 
    with 
-   | Failure(s) -> (*printf "%s" s;*) exit 0
+   | Failure(s) -> printf "%s" s; exit 0
    )in
    if !ir_print then ( printf "%s"  (pprint_ir_global ir));
 
