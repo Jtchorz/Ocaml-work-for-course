@@ -16,6 +16,8 @@ let funcnum = ref 0
 let gldeclnum = ref 0
 let buf = Buffer.create 16
 let rec bitsize_of_type = function
+  | _ -> QWord
+let rec special_bitsize_of_type = function
   | TInt | TVoid | TIdent(_) -> QWord
   | TChar -> Byte
   | TPoint(t) -> QWord
@@ -44,7 +46,7 @@ let func_register = function
 let bits_of_name name env =
   let(_,t) = List.assoc name env in 
   match t with
-  | TPoint(t) ->( match bitsize_of_type t with
+  | TPoint(t) ->( match special_bitsize_of_type t with
     | QWord -> 8
     | DWord -> 4 
     | Word -> 2 
@@ -55,7 +57,7 @@ let bits_of_name name env =
 let size_of_name name env =
   let(_,t) = List.assoc name env in 
   match t with
-  | TPoint(t1) -> bitsize_of_type t1
+  | TPoint(t1) -> special_bitsize_of_type t1
   |_-> failwith "not an array op"
 
 (*this gets them in the right order to make them easy to write*)
