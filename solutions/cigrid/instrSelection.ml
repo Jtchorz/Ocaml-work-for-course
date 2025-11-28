@@ -4,6 +4,8 @@ open Printf
 open AsmIr
 (*TODO ecall and char constants*)
 let rax = Reg(0,QWord)
+let rcx = Reg(1, QWord)
+let cl = Reg(1, Byte)
 let rdx = Reg(2, QWord)
 let rdi = Reg(7, QWord)
 let r10 = Reg(10, QWord)
@@ -109,9 +111,12 @@ let binop_select reg r1 r2 = function
     UnOp(Setne, r11b);
     BinOp(Mov, reg, r11)]
 
-  | BopShiftLeft -> [BinOp(Shl, r1, r2);
+  | BopShiftLeft -> [BinOp(Mov, rcx, r2);
+    BinOp(Shl, r1, cl);
     BinOp(Mov, reg, r1)]
-  | BopShiftRight -> [BinOp(Shr, r1, r2);
+
+  | BopShiftRight -> [BinOp(Mov, rcx, r2);
+    BinOp(Shr, r1, cl);
     BinOp(Mov, reg, r1)]
 
 let unop_select reg = function
@@ -128,7 +133,7 @@ let string_to_asm s =
   String.iter( fun c ->
     Buffer.add_string b (match c with
       | '\n' -> " 10," 
-      | '\t' -> " 13," 
+      | '\t' -> " 9," 
       | '\\' -> " 92,"
       |  '\''-> " 39,"
       |  '\"' -> " 34,"

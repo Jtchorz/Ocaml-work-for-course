@@ -89,7 +89,8 @@ let pprint_bitsize = function
   | QWord -> "qword" 
 
 let pprint_reg = function
-   | (0,DWord) -> "eax"
+  | (1, Byte) -> "cl"
+  | (0,DWord) -> "eax"
   | (1,DWord) -> "ecx"
   | (2,DWord) -> "edx"
   | (3,DWord) -> "ebx"
