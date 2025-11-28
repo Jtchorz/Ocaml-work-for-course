@@ -4,25 +4,31 @@ type ir_stmt =
   | ISExpr of expr * int 
   | ISVarAssign of string * expr *int
   | ISVarDecl  of string * ty *int
-
+  | ISDelete of string * int
+  | ISArrayAssign of string * expr * expr * int
 
 type ir_blockend = 
   | ISReturn of expr option * int
   | ISBranch of expr * string * string *int (*this and lower not used for S but gonna implement just to leave them empty later*)
   | ISJump of string *int
 
+
 type ir_block =
   | IBlock of string * (ir_stmt list * ir_blockend)*int
 
 type ir_global =
   | IFunc of string * (ty * (ty*string) list * ir_block list)*int
-  (*for higher levels, implement more things here like user defined functions etc*) 
-
-
+  | IGVarDef of ty * string * expr *int
+(*I am putting global vars in here because
+I want to implement strings as part of the .data
+section, and I don't want to have some of it written
+somewhere else, so both will be declared during instruction selection*)
 let pprint_ir_stmt = function
   | ISExpr(e,_) -> "ISExpr(" ^(pprint_expr e) ^")\n" 
   | ISVarAssign(s,e,_) -> "ISVarAssign(\""^s^"\", "^(pprint_expr e)^")\n"
   | ISVarDecl(s,t,_) -> "ISVarDecl(\""^s^"\", "^(pprint_ty t)^")\n"
+  | ISDelete(s,_)-> "IDelete(\""^s^"\")\n"
+  | ISArrayAssign(s,e,eVal,_)-> "ISArrayAssign(\""^s^"\", "^(pprint_expr e)^", "^(pprint_expr eVal)^")\n"
 
 let pprint_ir_blockend = function
   | ISReturn(eop,_) ->(
@@ -51,14 +57,15 @@ let rec pprint_block_list = function
 
 let pprint_ir_global = function
   | IFunc(s, (t, listTySt, blist),_) -> "IFunc("^(pprint_ty t)^", \""^s^"\", {"^(pprint_param_list listTySt)^"},\n"^(pprint_block_list blist)^")\n"
+  | IGVarDef(t,s,e,_) -> "IGVarDef("^(pprint_ty t)^", \""^s^"\", "^pprint_expr e^")\n"
 
 
 
-let pprint_ir_global iList =
+let pprint_ir_global_list iList =
     let rec work acc = function
-    | IFunc(s, (t, listTySt, blist),_)::restlist -> 
+    | iGlob::restlist -> 
       let nacc = 
-        acc^"IFunc("^(pprint_ty t)^", \""^s^"\", {"^(pprint_param_list listTySt)^"},\n"^(pprint_block_list blist)^")\n"
+        acc^(pprint_ir_global iGlob)
       in 
       work nacc restlist
     | [] -> acc

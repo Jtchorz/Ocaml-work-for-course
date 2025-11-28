@@ -49,20 +49,25 @@ let () =
    if !name_analysis then (name_check_program ast);
    if !type_check then (check_type ast);
 
-   let (ir,beforeS) =(try convert_AST ast 
+   (*this will handle extern, as there is no information that neeeds to be passed down to later*)
+   let (ir,externS) =(try convert_AST ast 
    with 
    | Failure(s) -> (*printf "%s" s;*) exit 0
    )in
-   if !ir_print then ( printf "%s"  (pprint_ir_global ir));
+   if !ir_print then ( printf "%s"  (pprint_ir_global_list ir));
 
-   let asm = (try
+   (*instruction selection produces .data because that handles global variables 
+   and strings efficiently*)
+   let (data, asm) = (try
    (InstrSelection.ir_global_to_asm ir)
    with 
-   | Failure(s) -> (*printf "%s" s; *)exit 0
+   | Failure(s) -> (*printf "%s" s;*) exit 0
    | _ -> (*printf "idkwtf";*) exit 0
    )
    in
-   let asm_string = (sprintf "%s\tglobal main \nsection .text\n%s" beforeS (pprint_func asm)) in
+     (*so we need to be able to declare globals actually, let's start with rewriting 
+   it in such a way that it declares just main dynamically*)
+   let asm_string = (sprintf "\textern\tmalloc \n\textern\tfree \n%s\n %s \n%s" externS data (pprint_func asm)) in
    if !asm_print then printf "%s" asm_string;
    if !compile then (
       let ch = open_out "a.asm" in 

@@ -80,7 +80,7 @@ let rec pprint_expr = function
   | EVar(s,_) -> "EVar(" ^ (string_print s) ^ ")"
   | EInt(n,_) -> "EInt(" ^ (string_of_int n) ^ ")" 
   | EChar(c,_) -> "EChar(" ^ (char_print c ) ^ ")"
-  | EString(s,_) ->  "EString(" ^ (string_print s) ^ ")"
+  | EString(s,_) -> "EString(" ^ (string_print s) ^ ")"
   | EBinOp(bop, e1, e2,_)  -> "EBinOp(" ^ (pprint_binop bop) ^ ", " ^ (pprint_expr e1) ^ ", " ^ (pprint_expr e2) ^ ")"
   | EUnOp(uop, e,_) ->  "EUnOp(" ^ (pprint_unop uop) ^ ", " ^ (pprint_expr e) ^ ")"
   | ECall(s, l,_) -> "ECall(" ^ (string_print s) ^ ", " ^ "{" ^ (String.concat " " (List.map pprint_expr l)) ^ "})"

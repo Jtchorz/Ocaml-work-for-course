@@ -3,7 +3,7 @@ open Printf
 type unop = Inc | Dec | Push | Pop | IMul | IDiv | Not | Neg | Setg | Setl |
 Setge | Setle | Sete | Setne
 
-type binop = Add | Sub | Cmp | Mov | And | Or | Xor
+type binop = Add | Sub | Cmp | Mov | And | Or | Xor | Shl | Shr
 
 type bitsize =
 | Byte | Word | DWord | QWord
@@ -16,6 +16,8 @@ type op =
   | TReg of reg * string
   (*| Mem of bitsize * reg * reg option * scale * displacement*)
   | Mem of bitsize * reg * reg option * int * int
+  | GString of string
+  | GVar of string 
   | NoOp
 
 type jbinop = Jl | Jg | Jle | Jge | Je | Jne
@@ -33,8 +35,11 @@ type inst =
 
 type block = Block of string * (inst list * blockend)
 
-type func = Func of string * block list
-
+type func = 
+  | Func of string * block list
+(*global variables dont need types, they 
+can all be in qword, and strings are just gonna return
+pointers*)
 let pprint_jbinop = function
   | Jl -> "jl"
   | Jg -> "jg"
@@ -73,6 +78,9 @@ let pprint_bop = function
   | And -> "and" 
   | Or -> "or" 
   | Xor -> "xor" 
+  | Shl -> "shl"
+  | Shr -> "shr"
+
 
 let pprint_bitsize = function
   | Byte -> "byte" 
@@ -117,7 +125,7 @@ let pprint_reg = function
   | _ -> failwith "not a real register, wtf"
 
 
-let pprint_op = function 
+let rec pprint_op = function 
   | Imm(n) -> sprintf "%d" n
   | Reg(n,b) -> pprint_reg (n,b)
   | TReg((n,bits), s) -> sprintf "%s_%d" s n
@@ -126,6 +134,8 @@ let pprint_op = function
     | Some(r2) -> sprintf "%s[%s + %s * %d + %d]" (pprint_bitsize bit) (pprint_reg r1) (pprint_reg r2) scale disp
     | None -> sprintf "%s[%s + %d]" (pprint_bitsize bit) (pprint_reg r1) disp
   ) 
+  | GString(s) -> s
+  | GVar(s) -> "[" ^ s ^"]"
   | NoOp -> ""
 
 let pprint_instruction = function
@@ -146,8 +156,10 @@ let rec pprint_block_list acc = function
   | [] -> acc
 
 let pprint_func funcList = 
-  let rec work acc = function
-  | Func(s, bList)::reslist -> 
-    acc^(pprint_block_list "" bList)
-  | [] -> acc
-  in work "" funcList 
+  let rec work global blocks = function
+  | Func(s, bList)::restlist -> 
+    let nblocks = blocks^(pprint_block_list "" bList) in
+    let nglobal = global^"\tglobal\t"^s^"\n" in 
+    work nglobal nblocks restlist
+  | [] -> (global^blocks)
+  in work "" "\tsection .text\n" funcList 
