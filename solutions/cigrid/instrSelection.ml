@@ -15,12 +15,10 @@ let r11b = Reg(11, Byte)
 let funcnum = ref 0
 let gldeclnum = ref 0
 let buf = Buffer.create 16
+
+(*everything is qword except for when we do array access, as there can be char arrays which need to be spaced correctly*)
 let rec bitsize_of_type = function
   | _ -> QWord
-let rec special_bitsize_of_type = function
-  | TInt | TVoid | TIdent(_) -> QWord
-  | TChar -> Byte
-  | TPoint(t) -> QWord
   (*write something here that will try to find in env and if it cant
     it will write an access to the global as a return, this will have to add a new
   operand, which will have to be spilled differently*)
@@ -42,23 +40,7 @@ let func_register = function
   | 5 -> Reg(9,QWord)
   | _ -> failwith "function has too many arguments"
 
-  (*this gets the name and should return either 8 or 1*)
-let bits_of_name name env =
-  let(_,t) = List.assoc name env in 
-  match t with
-  | TPoint(t) ->( match special_bitsize_of_type t with
-    | QWord -> 8
-    | DWord -> 4 
-    | Word -> 2 
-    | Byte -> 1
-  )
-  |_-> failwith "not an array op"
 
-let size_of_name name env =
-  let(_,t) = List.assoc name env in 
-  match t with
-  | TPoint(t1) -> special_bitsize_of_type t1
-  |_-> failwith "not an array op"
 
 (*this gets them in the right order to make them easy to write*)
 let binop_select reg r1 r2 = function
@@ -167,8 +149,26 @@ let string_to_asm s =
    (Buffer.contents b) ^ " 0"
 
 
-    
-(*this function has them in the wrong order for efficient adding*)
+(*this gets the name and should return either 8 or 1*)
+let bits_of_name name env =
+  let(_,t) = List.assoc name env in 
+  match t with
+  | TPoint(t1) ->( match t1 with
+    | TChar -> 1
+    | _ -> 8
+  )
+  |_-> failwith "not an array op"
+let bitsize_of_name name env =
+  let(_,t) = List.assoc name env in 
+  match t with
+  | TPoint(t1) -> (
+    match t1 with
+    | TChar -> Byte
+    | _ -> QWord
+  )
+  |_-> failwith "not an array op"
+
+(*this function has them in the wrong order for efficient adding and everythins is QWORD except strings*)
 let rec expr_to_asm env n acc reg = function
   | EVar(name, _) -> ((BinOp(Mov, reg, find_reg name env))::acc, n)
   | EInt(nu, _) -> ((BinOp(Mov, reg, Imm(nu)))::acc,n)
@@ -225,13 +225,15 @@ let rec expr_to_asm env n acc reg = function
     | Some(_) -> failwith "not implementing structs"
     | None -> 
       let (r1, rA) = (tmp_reg n, find_reg name env) in
-      let n1 = n+1 in 
+      let n1 = n+1 in
+      let bitsize = bitsize_of_name name env in 
       let acc1 = [
-        BinOp(Xor, r12, r12);
-        BinOp(Mov, r10, rA);
-        BinOp(Mov, r11, r1);
-        BinOp(Mov, Reg(12,size_of_name name env),Mem(size_of_name name env, (10,QWord), Some((11,QWord)), bits_of_name name env,0));
-        BinOp(Mov, reg, r12)]@acc in 
+        BinOp(Xor, r12, r12); (*result clear*)
+        BinOp(Mov, r10, rA); (*base*)
+        BinOp(Mov, r11, r1); (*element number*)
+        BinOp(Mov, Reg(12,bitsize),Mem(bitsize, (10,QWord), Some((11,QWord)), bits_of_name name env,0));
+        BinOp(Mov, reg, r12) (*everything else is 64 bit, so otherwise this makes no sense*)
+        ]@acc in 
       expr_to_asm env n1 acc1 r1 elementNum
   )
 
@@ -257,10 +259,14 @@ let rec irstmt_list_to_asm env n acc = function
     let (tInd,tE, rA) = (tmp_reg n, tmp_reg (n+1), find_reg name env) in 
     let n1 = n+2 in   
     let (eacc1, n2 ) = expr_to_asm env n1 [] tE e in
-    let (eacc2, n3) = expr_to_asm env n2 eacc1 tInd index in (*we have to eval exp first bcus index can x++*)
+    let (eacc2, n3) = expr_to_asm env n2 eacc1 tInd index in (*we have to eval exp first because index can x++*)
     (*eacc2 is in the right order, to add to its end we reverse it, and we store it like that*)
+    let bitsize = bitsize_of_name name env in
     let eacc3 = 
-      [BinOp(Mov, Mem(size_of_name name env,(10, QWord), Some(11,QWord), bits_of_name name env,0), tE); 
+      [ (*then the mov to memory will always be of the rigth size, only truncated*)
+      BinOp(Mov, Mem(bitsize,(10, QWord), Some(11,QWord), bits_of_name name env,0), Reg(12,bitsize));
+      BinOp(Mov, r12, tE);
+      BinOp(Xor, r12, r12); (*intermiditiary clear*) 
       BinOp(Mov, r10, rA);
       BinOp(Mov, r11, tInd)]@(List.rev eacc2) in 
     irstmt_list_to_asm env n3 (eacc3@acc) restlist
@@ -291,27 +297,12 @@ let bop_spill bop acc op1 op2 =
   | Imm(_) | Reg(_)  -> ( 
     match op1 with 
     | TReg((n,b),_) -> (BinOp(bop, Mem(b,(4,QWord),None,0,(n*8)), op2))::acc
-    | Reg(_) | GVar(_) -> (BinOp(bop, op1, op2))::acc
-    | GString(_) -> failwith "cant write to strings"
-    | Mem(_) -> failwith "tried spilling from reg to mem, notthought of"
-    | Imm(_) | NoOp -> failwith "impossible"
-    )
-
-  | Mem(bM,_,_,_,_) -> (
-    match op1 with  
-    | Reg(n,b) -> 
-      (BinOp(bop, Reg(n,bM), op2))::acc
-
-    | GVar(_) -> [(BinOp(bop, op1, r12));
-      BinOp(Mov, Reg(12,Byte), op2)]@acc 
-    | TReg((n1,b1),_) -> 
-      [BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r12);
-      BinOp(Mov, Reg(12,Byte), op2)]@acc 
+    | Reg(_) | GVar(_) | Mem(_) -> (BinOp(bop, op1, op2))::acc
     | GString(_) -> failwith "cant write to strings"
     | Imm(_) | NoOp -> failwith "impossible"
     )
 
-  | GString(_) | GVar(_) -> (
+  | GString(_) | GVar(_) | Mem(_) -> (
     match op1 with  
     | Reg(n,b) -> 
       (BinOp(bop, op1, op2))::acc
