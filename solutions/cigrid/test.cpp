@@ -1,8 +1,11 @@
-extern int printf(char *format, char*s);
+void empty(){
+}
 
-int x = 5;
+void call_no_args_call_statement(){
+  empty();
+}
 
-int main (){
-  x = 9+7;
-  return x;
+int main() {
+  call_no_args_call_statement();
+  return 0;
 }

@@ -319,6 +319,7 @@ let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*
       List.rev (
         [Block("________"^(string_of_int(!gldeclnum)),([UnOp(Pop, r12);BinOp(Add, Reg(4,QWord),Imm(n2*8))], Ret));
         Block(s,(acc3,blend))]@acc) in 
+    incr gldeclnum;
     ((*just add a special block of name "________" that will sub and ret, assume*)
       match finalblocklist with 
       | Block(s,(ir,bend))::restlist -> 
