@@ -1,0 +1,2 @@
+#!/bin/bash
+g++ "$@" -Wno-dangling-else -Wno-c++11-compat-deprecated-writable-strings
