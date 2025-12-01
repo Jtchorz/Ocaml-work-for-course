@@ -4,6 +4,7 @@
         extern  atoi
         extern  factorial_message
         extern  fflush
+        extern  abs
 
         section .data
 menu_str       db       "usage: <command> <arg1> <arg2>",10,10, \
@@ -82,7 +83,7 @@ endwhileprint:
 
 menu:
         mov     rdi, menu_str
-        call    puts  
+        call    abs 
         ret
 
 main:

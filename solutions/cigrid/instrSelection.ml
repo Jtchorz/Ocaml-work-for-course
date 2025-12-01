@@ -149,6 +149,7 @@ let string_to_asm s =
    (Buffer.contents b) ^ " 0"
 
 
+
 (*this gets the name and should return either 8 or 1*)
 let bits_of_name name env =
   let(_,t) = List.assoc name env in 
@@ -362,13 +363,13 @@ let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*
     let acc3 = List.rev (reg_alloc n2 [] acc2) in
     let finalblocklist = 
       List.rev (
-        [Block("________"^(string_of_int(!gldeclnum)),([UnOp(Pop, r12);BinOp(Add, Reg(4,QWord),Imm(n2*8))], Ret));
+        [Block("________"^(string_of_int(!gldeclnum)),([BinOp(Add, Reg(4,QWord),Imm(n2*8));UnOp(Pop, r12)], Ret));
         Block(s,(acc3,blend))]@acc) in 
     incr gldeclnum;
     ((*just add a special block of name "________" that will sub and ret, assume*)
       match finalblocklist with 
       | Block(s,(ir,bend))::restlist -> 
-        (Block(s, (BinOp(Sub, Reg(4,QWord),Imm(n2*8))::ir,bend))::restlist)
+        (Block(s, ([UnOp(Push, r12);BinOp(Sub, Reg(4,QWord),Imm(n2*8))]@ir,bend))::restlist)
       | [] -> failwith "impossible match, ocaml broke"
     )  
 
@@ -396,7 +397,7 @@ let handle_args name listTyStr =
       work nenv n1 nacc restlist
     | [] -> 
       funcnum := 0; (env, n, List.rev acc)
-  in let (nenv, n1, acc) = (work [] 0 [UnOp(Push, r12)] listTyStr) in 
+  in let (nenv, n1, acc) = (work [] 0 [] listTyStr) in 
   let nacc = List.rev (reg_alloc n1 [] acc) in (*spill them*)
   (nenv, n1, Block(name,(nacc,Jmp("_"^name^"_"))))
 
