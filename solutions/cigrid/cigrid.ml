@@ -61,9 +61,9 @@ let () =
    let (data, asm) = (try
    (InstrSelection.ir_global_to_asm ir)
    with 
-   | Failure(s) -> (*printf "%s" s;*) exit 0
+   | Failure(s) -> (*printf "%s" s; *) exit 0
    | _ -> (*printf "idkwtf";*) exit 0
-   )
+   ) 
    in
      (*so we need to be able to declare globals actually, let's start with rewriting 
    it in such a way that it declares just main dynamically*)

@@ -229,11 +229,19 @@ let rec expr_to_asm env n acc reg = function
       let n1 = n+1 in
       let bitsize = bitsize_of_name name env in 
       let acc1 = [
+        UnOp(Push, r12);
+        UnOp(Push, r11);
+        UnOp(Push, r10);
+
         BinOp(Xor, r12, r12); (*result clear*)
         BinOp(Mov, r10, rA); (*base*)
         BinOp(Mov, r11, r1); (*element number*)
         BinOp(Mov, Reg(12,bitsize),Mem(bitsize, (10,QWord), Some((11,QWord)), bits_of_name name env,0));
-        BinOp(Mov, reg, r12) (*everything else is 64 bit, so otherwise this makes no sense*)
+        BinOp(Mov, reg, r12); (*everything else is 64 bit, so otherwise this makes no sense*)
+
+        UnOp(Pop, r12);
+        UnOp(Pop, r11);
+        UnOp(Pop, r10)
         ]@acc in 
       expr_to_asm env n1 acc1 r1 elementNum
   )
@@ -265,11 +273,19 @@ let rec irstmt_list_to_asm env n acc = function
     let bitsize = bitsize_of_name name env in
     let eacc3 = 
       [ (*then the mov to memory will always be of the rigth size, only truncated*)
+      UnOp(Pop, r12);
+      UnOp(Pop, r11);
+      UnOp(Pop, r10);
+
       BinOp(Mov, Mem(bitsize,(10, QWord), Some(11,QWord), bits_of_name name env,0), Reg(12,bitsize));
       BinOp(Mov, r12, tE);
       BinOp(Xor, r12, r12); (*intermiditiary clear*) 
       BinOp(Mov, r10, rA);
-      BinOp(Mov, r11, tInd)]@(List.rev eacc2) in 
+      BinOp(Mov, r11, tInd);
+
+      UnOp(Push, r12);
+      UnOp(Push, r11);
+      UnOp(Push, r10);]@(List.rev eacc2) in 
     irstmt_list_to_asm env n3 (eacc3@acc) restlist
 
   | [] -> (env, n, List.rev acc)
@@ -278,12 +294,14 @@ let rec irstmt_list_to_asm env n acc = function
 Return a blockend, extra instructions if needed and the updated counter
 jmps to a secret thing to prevent very bad behavior sometimes
   *)
+
+  (*check for jumping here too? like wtf bro, how did u write this shit so baaad*)
 let ir_blockend env n acc = function
   | ISReturn(eop, _) ->(
     match eop with 
-    | Some(e) -> let (eacc, n1) = expr_to_asm env n [] rax e in 
+    | Some(e) -> let (eacc, n1) = expr_to_asm env n [] rax e in (*put result in the right spot*)
       ((Jmp("________"^(string_of_int(!gldeclnum)))), acc@eacc,n1)
-    | None -> ((Jmp("________"^(string_of_int(!gldeclnum)))), acc, n)
+    | None -> ((Jmp("________"^(string_of_int(!gldeclnum)))), acc, n)  (*jump to the endblock*)
   )
   | ISBranch(exp,s1,s2,_) -> 
     let (eacc, n1) = expr_to_asm env n [] rax exp in 
@@ -303,17 +321,22 @@ let bop_spill bop acc op1 op2 =
     | Imm(_) | NoOp -> failwith "impossible"
     )
 
+    
   | GString(_) | GVar(_) | Mem(_) -> (
     match op1 with  
     | Reg(n,b) -> 
       (BinOp(bop, op1, op2))::acc
-    | Mem(_) | GVar(_) -> [(BinOp(bop, op1, r12));
-      BinOp(Mov, r12, op2)]@acc
+
+    | GVar(_) -> [(BinOp(bop, op1, r12));
+      BinOp(Mov, r12, op2)]@acc 
+
     | TReg((n1,b1),_) -> 
       [BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r12);
       BinOp(Mov, r12, op2)]@acc
+
     | GString(_) -> failwith "cant write to strings"
-    | Imm(_) | NoOp -> failwith "impossible"
+    | Imm(_) | NoOp  -> failwith "impossible"
+    | Mem(_) -> failwith "writing to Mem with smth else than registers, faulty logic somewhere"
     )
 
     
@@ -321,10 +344,12 @@ let bop_spill bop acc op1 op2 =
     match op1 with  
     | Reg(_) -> 
       (BinOp(bop, op1, Mem(b,(4,QWord),None,0,(n*8))))::acc
-    | Mem(bM,_,_,_,_) -> [(BinOp(bop, op1, Reg(12,bM)));
-      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))]@acc
+    | Mem(bM,_,_,_,_) -> failwith "faulty logic, only real registers allowed in Mem"
+      (*[(BinOp(bop, op1, Reg(12,bM)));
+      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))]@acc*)
     | GVar(_) -> [(BinOp(bop, op1, r12));
-      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))]@acc
+      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))
+      ]@acc
     | TReg((n1,b1),_) -> 
       (BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r10))::(BinOp(Mov, r10, Mem(b,(4,QWord),None,0,(n*8))))::acc
     | GString(_) -> failwith "cant write to strings"
@@ -339,8 +364,20 @@ let uop_spill acc uop op =
   | TReg((n,b),_) -> (UnOp(uop, (Mem(b,(4,QWord),None,0,(n*8))) ))::acc
   | Mem(_) | NoOp -> failwith "impossible" 
 
+
+(*basically I want to just do this here? before the reg_alloc which also spills, I should have pretty good access to all the data? lets see what happens
+if I just do nothing here*)
+
+(*ok, so I think I just want to do two things at once get this to be like forwarded like normal to the spilling, and just before that create a node
+for each instruction, with:
+succ - if its a normal instruction, just instruction +1
+      if its a jump, we for now just *)
+
 (*these will return in rev order because above returns that way*)
 let rec reg_alloc n acc = function
+ (* | op::restlist ->  let acc2 = op::acc in 
+      reg_alloc n acc2 restlist
+  | [] -> acc*)
     | BinOp(bop, op1, op2)::restlist -> let acc2 = bop_spill bop acc op1 op2 in 
       reg_alloc n acc2 restlist 
     | UnOp(uop, op)::restlist -> let acc2 = uop_spill acc uop op in 
@@ -352,10 +389,7 @@ let rec reg_alloc n acc = function
     (*| _ -> failwith "assert instrSelection reg_alloc"*)
 
 
-(*this implementation is extra faulty, it makes returns inside of everything
-not sub the stack correctly maybe in the irgen instead of
-returning, create a secret block at the end? one that you always jump to, and add it in here?
-*)
+
 let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*)
   | IBlock(s,(stlist,blockend),_)::[] -> 
     let (env, n1, acc1) = (irstmt_list_to_asm prevEnv n [] stlist) in 
@@ -423,3 +457,5 @@ let ir_global_to_asm iList =
     | [] -> (Buffer.contents buf, List.rev acc)
     in Buffer.add_string buf "\tsection .data\n";
     work [] iList
+
+(*code below here is for g-level it is suppposed to be in such a way that we can go here and register allocate and spill everything*)
