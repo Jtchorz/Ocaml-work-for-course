@@ -12,6 +12,7 @@ let r10 = Reg(10, QWord)
 let r11 = Reg(11, QWord)
 let r12 = Reg(12, QWord)
 let r11b = Reg(11, Byte)
+let rsp = Reg(4, QWord)
 let funcnum = ref 0
 let gldeclnum = ref 0
 let buf = Buffer.create 16
@@ -217,7 +218,7 @@ let rec expr_to_asm env n acc reg = function
     if t = TChar then 
       [BinOp(Mov,rdi, r1);Call("malloc");BinOp(Mov,reg,rax)]@acc
     else
-       [BinOp(Mov,rdi, r1);BinOp(Shl, rdi, Imm(8));Call("malloc");BinOp(Mov,reg,rax)]@acc 
+       [BinOp(Mov,rdi, r1);BinOp(Shl, rdi, Imm(3));Call("malloc");BinOp(Mov,reg,rax)]@acc 
       in 
     expr_to_asm env n1 acc1 r1 exp 
   )
@@ -229,9 +230,7 @@ let rec expr_to_asm env n acc reg = function
       let n1 = n+1 in
       let bitsize = bitsize_of_name name env in 
       let acc1 = [
-        UnOp(Push, r12);
-        UnOp(Push, r11);
-        UnOp(Push, r10);
+
 
         BinOp(Xor, r12, r12); (*result clear*)
         BinOp(Mov, r10, rA); (*base*)
@@ -239,9 +238,6 @@ let rec expr_to_asm env n acc reg = function
         BinOp(Mov, Reg(12,bitsize),Mem(bitsize, (10,QWord), Some((11,QWord)), bits_of_name name env,0));
         BinOp(Mov, reg, r12); (*everything else is 64 bit, so otherwise this makes no sense*)
 
-        UnOp(Pop, r12);
-        UnOp(Pop, r11);
-        UnOp(Pop, r10)
         ]@acc in 
       expr_to_asm env n1 acc1 r1 elementNum
   )
@@ -273,9 +269,6 @@ let rec irstmt_list_to_asm env n acc = function
     let bitsize = bitsize_of_name name env in
     let eacc3 = 
       [ (*then the mov to memory will always be of the rigth size, only truncated*)
-      UnOp(Pop, r12);
-      UnOp(Pop, r11);
-      UnOp(Pop, r10);
 
       BinOp(Mov, Mem(bitsize,(10, QWord), Some(11,QWord), bits_of_name name env,0), Reg(12,bitsize));
       BinOp(Mov, r12, tE);
@@ -283,9 +276,7 @@ let rec irstmt_list_to_asm env n acc = function
       BinOp(Mov, r10, rA);
       BinOp(Mov, r11, tInd);
 
-      UnOp(Push, r12);
-      UnOp(Push, r11);
-      UnOp(Push, r10);]@(List.rev eacc2) in 
+      ]@(List.rev eacc2) in 
     irstmt_list_to_asm env n3 (eacc3@acc) restlist
 
   | [] -> (env, n, List.rev acc)
