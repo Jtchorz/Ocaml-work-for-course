@@ -16,6 +16,7 @@ let ir_print = ref false
 let input_file = ref ""
 let asm_print = ref false
 let compile = ref false
+let liveness = ref false
 let current = ref 0
 
 let testasmIr = Func("main",
@@ -31,7 +32,7 @@ let speclist =
       ("--ir", Arg.Set ir_print, "pretty-print the ir representation");
       ("--asm", Arg.Set asm_print, "pretty-print the assembly code");
       ("--compile", Arg.Set compile, "compile the produced assembly code");
-      ("--compile", Arg.Set compile, "compile the produced assembly code");]
+      ("--liveness", Arg.Set liveness, "perform liveness analysis on generated assembly");]
 let anon_fun f =
    input_file := f
 
@@ -66,10 +67,17 @@ let () =
    | _ -> printf "idkwtf"; exit 0
    ) 
    in
+   let asm2 =(
+      if !liveness then
+          asm
+      else 
+          InstrSelection.reg_allocc asm
+         )
+      in
 
      (*so we need to be able to declare globals actually, let's start with rewriting 
    it in such a way that it declares just main dynamically*)
-   let asm_string = (sprintf "\textern\tmalloc \n\textern\tfree \n%s\n %s \n%s" externS data (pprint_func asm)) in
+   let asm_string = (sprintf "\textern\tmalloc \n\textern\tfree \n%s\n %s \n%s" externS data (pprint_func asm2)) in
    if !asm_print then printf "%s" asm_string;
    if !compile then (
       let ch = open_out "a.asm" in 

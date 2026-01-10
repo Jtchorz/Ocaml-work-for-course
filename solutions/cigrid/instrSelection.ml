@@ -281,12 +281,7 @@ let rec irstmt_list_to_asm env n acc = function
 
   | [] -> (env, n, List.rev acc)
 
-(*takes enviorement, current counter and the previous instructions
-Return a blockend, extra instructions if needed and the updated counter
-jmps to a secret thing to prevent very bad behavior sometimes
-  *)
 
-  (*check for jumping here too? like wtf bro, how did u write this shit so baaad*)
 let ir_blockend env n acc = function
   | ISReturn(eop, _) ->(
     match eop with 
@@ -301,91 +296,11 @@ let ir_blockend env n acc = function
   | ISJump(name,_) -> (Jmp(name), acc, n) 
 
 
-  (*this returns in reverse order*)
-let bop_spill bop acc op1 op2 =
-  match op2 with
-  | Imm(_) | Reg(_)  -> ( 
-    match op1 with 
-    | TReg((n,b),_) -> (BinOp(bop, Mem(b,(4,QWord),None,0,(n*8)), op2))::acc
-    | Reg(_) | GVar(_) | Mem(_) -> (BinOp(bop, op1, op2))::acc
-    | GString(_) -> failwith "cant write to strings"
-    | Imm(_) | NoOp -> failwith "impossible"
-    )
-
-    
-  | GString(_) | GVar(_) | Mem(_) -> (
-    match op1 with  
-    | Reg(n,b) -> 
-      (BinOp(bop, op1, op2))::acc
-
-    | GVar(_) -> [(BinOp(bop, op1, r12));
-      BinOp(Mov, r12, op2)]@acc 
-
-    | TReg((n1,b1),_) -> 
-      [BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r12);
-      BinOp(Mov, r12, op2)]@acc
-
-    | GString(_) -> failwith "cant write to strings"
-    | Imm(_) | NoOp  -> failwith "impossible"
-    | Mem(_) -> failwith "writing to Mem with smth else than registers, faulty logic somewhere"
-    )
-
-    
-  | TReg((n,b),_) -> (
-    match op1 with  
-    | Reg(_) -> 
-      (BinOp(bop, op1, Mem(b,(4,QWord),None,0,(n*8))))::acc
-    | Mem(bM,_,_,_,_) -> failwith "faulty logic, only real registers allowed in Mem"
-      (*[(BinOp(bop, op1, Reg(12,bM)));
-      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))]@acc*)
-    | GVar(_) -> [(BinOp(bop, op1, r12));
-      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))
-      ]@acc
-    | TReg((n1,b1),_) -> 
-      (BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r10))::(BinOp(Mov, r10, Mem(b,(4,QWord),None,0,(n*8))))::acc
-    | GString(_) -> failwith "cant write to strings"
-    | Imm(_) | NoOp -> failwith "impossible"
-    )
-  
-  | NoOp -> failwith "impossible"
-
-let uop_spill acc uop op =
-  match op with
-  | Imm(_) | Reg(_) | GString(_) | GVar(_) -> (UnOp(uop, op))::acc
-  | TReg((n,b),_) -> (UnOp(uop, (Mem(b,(4,QWord),None,0,(n*8))) ))::acc
-  | Mem(_) | NoOp -> failwith "impossible" 
-
-
-(*basically I want to just do this here? before the reg_alloc which also spills, I should have pretty good access to all the data? lets see what happens
-if I just do nothing here*)
-
-(*ok, so I think I just want to do two things at once get this to be like forwarded like normal to the spilling, and just before that create a node
-for each instruction, with:
-succ - if its a normal instruction, just instruction +1
-      if its a jump, we for now just *)
-
-(*these will return in rev order because above returns that way*)
-let rec reg_alloc n acc = function
- (* | op::restlist ->  let acc2 = op::acc in 
-      reg_alloc n acc2 restlist
-  | [] -> acc*)
-    | BinOp(bop, op1, op2)::restlist -> let acc2 = bop_spill bop acc op1 op2 in 
-      reg_alloc n acc2 restlist 
-    | UnOp(uop, op)::restlist -> let acc2 = uop_spill acc uop op in 
-      reg_alloc n acc2 restlist 
-    | Call(s)::restlist -> reg_alloc n (Call(s)::acc) restlist 
-    | Cqo::restlist -> reg_alloc n (Cqo::acc) restlist 
-    | [] -> acc
-
-    (*| _ -> failwith "assert instrSelection reg_alloc"*)
-
-
 
 let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*)
-  | IBlock(s,(stlist,blockend),_)::[] -> 
+  | IBlock(s,(stlist,blockend),_)::[] -> (*handle the last block, also create a special block that is a sentinel, for early returns*)
     let (env, n1, acc1) = (irstmt_list_to_asm prevEnv n [] stlist) in 
-    let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in 
-    let acc3 = List.rev (reg_alloc n2 [] acc2) in
+    let (blend, acc3, n2) = (ir_blockend env n1 acc1 blockend) in 
     let finalblocklist = 
       List.rev (
         [Block("________"^(string_of_int(!gldeclnum)),([BinOp(Add, Reg(4,QWord),Imm(n2*8));UnOp(Pop, r12)], Ret));
@@ -401,9 +316,7 @@ let rec block_list_to_asm prevEnv n acc = function    (*create the instructions*
   | IBlock(s,(stlist,blockend),_)::restlist -> 
     let (env, n1, acc1) = (irstmt_list_to_asm prevEnv n [] stlist) in 
     (*handle the blockend*) 
-    let (blend, acc2, n2) = (ir_blockend env n1 acc1 blockend) in 
-    (*this is supposed to spill just one block , not push pop anything*)
-    let acc3 = List.rev (reg_alloc n2 [] acc2) in 
+    let (blend, acc3, n2) = (ir_blockend env n1 acc1 blockend) in 
     block_list_to_asm env n2 ((Block(s,(acc3,blend)))::acc) restlist
 
   | [] -> failwith "no blocks to compile"
@@ -423,8 +336,8 @@ let handle_args name listTyStr =
     | [] -> 
       funcnum := 0; (env, n, List.rev acc)
   in let (nenv, n1, acc) = (work [] 0 [] listTyStr) in 
-  let nacc = List.rev (reg_alloc n1 [] acc) in (*spill them*)
-  (nenv, n1, Block(name,(nacc,Jmp("_"^name^"_"))))
+ (* let nacc = List.rev (reg_alloc n1 [] acc) in (*spill them*)*)
+  (nenv, n1, Block(name,(acc,Jmp("_"^name^"_"))))
 
   (*the first block and env is created to handle input arguments 
   *)
@@ -449,4 +362,90 @@ let ir_global_to_asm iList =
     in Buffer.add_string buf "\tsection .data\n";
     work [] iList
 
-(*code below here is for g-level it is suppposed to be in such a way that we can go here and register allocate and spill everything*)
+(*code below here is for spilling and register allocation
+/////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////*)
+
+(*I do hate this function and all of its complexity, I don't know how would I ever rewrite it tho*)
+let bop_spill bop op1 op2 =
+  match op2 with
+  | Imm(_) | Reg(_)  -> ( 
+    match op1 with 
+    | TReg((n,b),_) -> [(BinOp(bop, Mem(b,(4,QWord),None,0,(n*8)), op2))]
+    | Reg(_) | GVar(_) | Mem(_) -> [(BinOp(bop, op1, op2))]
+    | GString(_) -> failwith "cant write to strings"
+    | Imm(_) | NoOp -> failwith "impossible"
+    )
+
+    
+  | GString(_) | GVar(_) | Mem(_) -> (
+    match op1 with  
+    | Reg(n,b) -> 
+      [(BinOp(bop, op1, op2))]
+
+    | GVar(_) -> [(BinOp(bop, op1, r12));
+      BinOp(Mov, r12, op2)]
+
+    | TReg((n1,b1),_) -> 
+      [BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r12);
+      BinOp(Mov, r12, op2)]
+
+    | GString(_) -> failwith "cant write to strings"
+    | Imm(_) | NoOp  -> failwith "impossible"
+    | Mem(_) -> failwith "writing to Mem with smth else than registers, faulty logic somewhere"
+    )
+
+    
+  | TReg((n,b),_) -> (
+    match op1 with  
+    | Reg(_) -> 
+      [(BinOp(bop, op1, Mem(b,(4,QWord),None,0,(n*8))))]
+    | Mem(bM,_,_,_,_) -> failwith "faulty logic, only real registers allowed in Mem"
+      (*[(BinOp(bop, op1, Reg(12,bM)));
+      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))]@acc*)
+    | GVar(_) -> [(BinOp(bop, op1, r12));
+      BinOp(Mov, r12, Mem(b,(4,QWord),None,0,(n*8)))
+      ]
+    | TReg((n1,b1),_) -> 
+      [(BinOp(bop, Mem(b1,(4,QWord),None,0,(n1*8)),r10));(BinOp(Mov, r10, Mem(b,(4,QWord),None,0,(n*8))))]
+    | GString(_) -> failwith "cant write to strings"
+    | Imm(_) | NoOp -> failwith "impossible"
+    )
+  
+  | NoOp -> failwith "impossible"
+
+let uop_spill uop op =
+  match op with
+  | Imm(_) | Reg(_) | GString(_) | GVar(_) -> [(UnOp(uop, op))]
+  | TReg((n,b),_) -> [UnOp(uop, (Mem(b,(4,QWord),None,0,(n*8))) )]
+  | Mem(_) | NoOp -> failwith "impossible" 
+
+
+(*under here is just unpacking everything to be able to spill each instruction individually
+/////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////*)
+
+let rec instr_spill = function
+    | BinOp(bop, op1, op2) -> List.rev (bop_spill bop op1 op2) (*this is an artifact, could write in the right order, would improve this marginally*)
+    | UnOp(uop, op) -> uop_spill uop op 
+    | Call(s) -> [Call(s)]
+    | Cqo -> [Cqo] 
+
+    (*| _ -> failwith "assert instrSelection reg_alloc"*)
+
+ let spill_block = function 
+  | Block(s,(instList, blEnd)) -> Block(s, ((List.concat_map instr_spill instList), blEnd)) (*blENd is literally just a jmp at this point, doesnt need to be spilled*)
+
+
+(*this should return the same thing that it gets, which is a list of functions*)
+let reg_allocc func_list = 
+  let rec work spilled_functions = function
+  | Func(s, bList)::restlist -> 
+    let nfunc = Func(s, List.map spill_block bList)::spilled_functions in
+    work nfunc restlist 
+
+  | [] -> List.rev spilled_functions
+  
+  in work [] func_list 
