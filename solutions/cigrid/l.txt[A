@@ -1,0 +1,135 @@
+Node(________0, succ = {_inst33}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_after_while1, succ = {_inst31}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst00, succ = {_inst01}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst01, succ = {_inst02}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst02, succ = {_main_}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst03, succ = {_inst04}, def = {vreg00}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst04, succ = {_inst05}, def = {vreg01}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst05, succ = {_inst06}, def = {vreg02}, use = {vreg00}, live_in = {}, live_out = {}) 
+
+Node(_inst06, succ = {_inst07}, def = {vreg03}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst07, succ = {_inst08}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst08, succ = {_inst09}, def = {vreg02}, use = {vreg03}, live_in = {}, live_out = {}) 
+
+Node(_inst09, succ = {_inst10}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst10, succ = {_inst11}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst11, succ = {_inst12}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst12, succ = {_while_body0, _after_while1}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst13, succ = {_inst14}, def = {vreg04}, use = {vreg00}, live_in = {}, live_out = {}) 
+
+Node(_inst14, succ = {_inst15}, def = {vreg05}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst15, succ = {_inst16}, def = {vreg00}, use = {vreg04}, live_in = {}, live_out = {}) 
+
+Node(_inst16, succ = {_inst17}, def = {vreg00}, use = {vreg05}, live_in = {}, live_out = {}) 
+
+Node(_inst17, succ = {_inst18}, def = {vreg06}, use = {vreg01}, live_in = {}, live_out = {}) 
+
+Node(_inst18, succ = {_inst19}, def = {vreg07}, use = {vreg00}, live_in = {}, live_out = {}) 
+
+Node(_inst19, succ = {_inst20}, def = {}, use = {vreg06}, live_in = {}, live_out = {}) 
+
+Node(_inst20, succ = {_inst21}, def = {}, use = {vreg07}, live_in = {}, live_out = {}) 
+
+Node(_inst21, succ = {_inst22}, def = {vreg01}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst22, succ = {_while_cond2}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst23, succ = {_inst24}, def = {vreg08}, use = {vreg00}, live_in = {}, live_out = {}) 
+
+Node(_inst24, succ = {_inst25}, def = {vreg09}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst25, succ = {_inst26}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst26, succ = {_inst27}, def = {vreg08}, use = {vreg09}, live_in = {}, live_out = {}) 
+
+Node(_inst27, succ = {_inst28}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst28, succ = {_inst29}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst29, succ = {_inst30}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst30, succ = {_while_body0, _after_while1}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst31, succ = {_inst32}, def = {}, use = {vreg01}, live_in = {}, live_out = {}) 
+
+Node(_inst32, succ = {________0}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst33, succ = {_inst34}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst34, succ = {_inst35}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_inst35, succ = {}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_main_, succ = {_inst03}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_while_body0, succ = {_inst13}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(_while_cond2, succ = {_inst23}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+Node(main, succ = {_inst00}, def = {}, use = {}, live_in = {}, live_out = {}) 
+
+	extern	malloc 
+	extern	free 
+
+ 	section .data
+ 
+	global	main
+	section .text
+main:
+	push	r12
+	sub	rsp, 80
+	jmp	_main_
+_main_:
+	mov	x_0, 0
+	mov	y_1, 1
+	mov	tmp_2, x_0
+	mov	tmp_3, 5
+	xor	r11, r11
+	sub	tmp_2, tmp_3
+	setl	r11b
+	mov	rax, r11
+	cmp	rax, 0
+	jne	_while_body0
+	jmp	_after_while1
+_while_body0:
+	mov	tmp_4, x_0
+	mov	tmp_5, 1
+	mov	x_0, tmp_4
+	add	x_0, tmp_5
+	mov	tmp_6, y_1
+	mov	tmp_7, x_0
+	mov	rax, tmp_6
+	imul	tmp_7
+	mov	y_1, rax
+	jmp	_while_cond2
+_while_cond2:
+	mov	tmp_8, x_0
+	mov	tmp_9, 5
+	xor	r11, r11
+	sub	tmp_8, tmp_9
+	setl	r11b
+	mov	rax, r11
+	cmp	rax, 0
+	jne	_while_body0
+	jmp	_after_while1
+_after_while1:
+	mov	rax, y_1
+	jmp	________0
+________0:
+	add	rsp, 80
+	pop	r12
+	ret

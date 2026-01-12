@@ -63,20 +63,19 @@ let () =
    let (data, asm) = (try
    (InstrSelection.ir_global_to_asm ir)
    with 
-   | Failure(s) -> printf "%s" s;  exit 0
-   | _ -> printf "idkwtf"; exit 0
+   | Failure(s) -> (*printf "%s" s;*)  exit 0
+   | _ -> (*printf "idkwtf";*) exit 0
    ) 
    in
-   let asm2 =(
-      if !liveness then
-          asm
-      else 
-          InstrSelection.reg_allocc asm
-         )
-      in
 
-     (*so we need to be able to declare globals actually, let's start with rewriting 
-   it in such a way that it declares just main dynamically*)
+   if !liveness then(
+      Liveness.analyze asm;
+      let unspilled_string = (sprintf "\textern\tmalloc \n\textern\tfree \n%s\n %s \n%s" externS data (pprint_func asm)) in
+      printf "%s" unspilled_string;
+   );
+
+   let asm2 = InstrSelection.reg_allocc asm 
+   in
    let asm_string = (sprintf "\textern\tmalloc \n\textern\tfree \n%s\n %s \n%s" externS data (pprint_func asm2)) in
    if !asm_print then printf "%s" asm_string;
    if !compile then (

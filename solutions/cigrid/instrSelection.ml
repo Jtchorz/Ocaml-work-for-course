@@ -428,7 +428,7 @@ let uop_spill uop op =
 /////////////////////////////////////////////////////////////////*)
 
 let rec instr_spill = function
-    | BinOp(bop, op1, op2) -> List.rev (bop_spill bop op1 op2) (*this is an artifact, could write in the right order, would improve this marginally*)
+    | BinOp(bop, op1, op2) -> List.rev (bop_spill bop op1 op2) (*this is an artifact, could write in the right order, would improve this marginally *)
     | UnOp(uop, op) -> uop_spill uop op 
     | Call(s) -> [Call(s)]
     | Cqo -> [Cqo] 
