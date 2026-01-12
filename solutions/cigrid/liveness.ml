@@ -59,7 +59,7 @@ then it will analyze the straight line code and the blockend
 should handle only one block*)
  let unpack_block = function 
   | Block(s,(instList, blEnd)) -> 
-    Hashtbl.add graph s {name="_"^s; succesors=["_inst"^(Printf.sprintf "%02d" !iNum)]; def=[];use=[];live_in=[];live_out=[];};
+    Hashtbl.add graph s {name="_"^s; succesors=["inst"^(Printf.sprintf "%02d" !iNum)]; def=[];use=[];live_in=[];live_out=[];};
     List.iter instr_to_node instList;
     blockend_to_node blEnd
      (*blENd is literally just a jmp at this point, doesnt need to be spilled*)
@@ -95,7 +95,8 @@ let print_graph () =
 
 (*returns the live_in for all the successors*)
 let succ_in name =
-    let n = Hashtbl.find graph name
+    let n = (try Hashtbl.find graph name with 
+    | _ -> printf "%s" name; exit 9)
     in 
     n.live_in 
 
@@ -125,7 +126,7 @@ let liveness () =
 (*overall function that makes following the structure easier*)
 let analyze asm =  
   generate_graph asm;  
-  (*print_graph ();*)
+  print_graph ();
   liveness ();
   print_graph ()
 

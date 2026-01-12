@@ -69,9 +69,9 @@ let () =
    in
 
    if !liveness then(
-      Liveness.analyze asm;
       let unspilled_string = (sprintf "\textern\tmalloc \n\textern\tfree \n%s\n %s \n%s" externS data (pprint_func asm)) in
       printf "%s" unspilled_string;
+      Liveness.analyze asm;
    );
 
    let asm2 = InstrSelection.reg_allocc asm 

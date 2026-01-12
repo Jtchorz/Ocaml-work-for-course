@@ -337,8 +337,10 @@ let handle_args name listTyStr =
       funcnum := 0; (env, n, List.rev acc)
   in let (nenv, n1, acc) = (work [] 0 [] listTyStr) in 
  (* let nacc = List.rev (reg_alloc n1 [] acc) in (*spill them*)*)
-  (nenv, n1, Block(name,(acc,Jmp("_"^name^"_"))))
-
+  if name <> "" then 
+    (nenv, n1, Block(name,(acc,Jmp("_"^name^"_"))))
+  else 
+    ([], 0, Block(name,([],Jmp("________0"))))
   (*the first block and env is created to handle input arguments 
   *)
 let ir_global_to_asm iList =
